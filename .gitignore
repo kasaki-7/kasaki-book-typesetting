@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+work/
+output/
+*.epub
+.DS_Store
+Thumbs.db
