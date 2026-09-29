@@ -3,18 +3,9 @@
 import os, sys, json, re, threading
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-
-# 依赖搜索路径：正常情况下直接 pip install -r requirements.txt 即可，无需此处。
-# 以下为免安装场景的兜底探测（按优先级）：环境变量 > 项目内 pylibs > 上级目录 pylibs
-PYLIBS = ""
-for _p in (os.environ.get("EPUB_STUDIO_PYLIBS", ""),
-           os.path.join(BASE, "pylibs"),
-           os.path.join(os.path.dirname(BASE), "pylibs")):
-    if _p and os.path.isdir(_p):
-        PYLIBS = _p
-        if _p not in sys.path:
-            sys.path.insert(0, _p)
-        break
+PYLIBS = r"C:\Users\86158\WorkBuddy\2026-09-24-23-45-45\pylibs"
+if os.path.isdir(PYLIBS) and PYLIBS not in sys.path:
+    sys.path.insert(0, PYLIBS)
 
 from flask import Flask, request, jsonify, send_file, send_from_directory
 import epub_core as core
@@ -389,7 +380,9 @@ def upload():
         dst = os.path.join(ASSETS, f"inline_{len(st['inline_images'])}" + ext)
         f.save(dst)
         st["inline_images"].append({"path": dst, "chapter": 0, "para": 0,
-                                    "where": "after", "width_pct": 60, "wrap": "block"})
+                                    "where": "after", "width_pct": 60, "wrap": "block",
+                                    "anchor_chapter": 0, "anchor_text": "", "anchor_pos": "after",
+                                    "mode": "para"})
     else:
         return jsonify({"error": "未知类型"}), 400
     save_book(b)
@@ -428,10 +421,13 @@ def inline_image(idx):
         lst.pop(idx)
     else:
         d = request.json
-        for k in ("chapter", "para", "width_pct"):
+        for k in ("chapter", "para", "width_pct", "anchor_chapter"):
             if k in d:
-                lst[idx][k] = int(d[k])
-        for k in ("where", "wrap"):
+                try:
+                    lst[idx][k] = int(d[k])
+                except (TypeError, ValueError):
+                    pass
+        for k in ("where", "wrap", "anchor_text", "anchor_pos", "mode"):
             if k in d:
                 lst[idx][k] = d[k]
     save_book(b)

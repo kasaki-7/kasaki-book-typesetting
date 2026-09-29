@@ -168,6 +168,31 @@
           <span class="muted">注释语法 {{注:内容}}，正文中点[注]弹出，注释末尾↩跳回（双向）</span>
         </div>
         <textarea id="chtext" rows="20"></textarea>
+        <div class="row" style="margin-top:8px">
+          <span class="muted">选中正文文字后点右侧按钮即可就地插入图片，无需数段号</span>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button class="sm" onclick="pickUpload('inline')">上传插图</button>
+          <button class="sm primary" onclick="insertImageAtSelection(false)">在选中文字后插入插图</button>
+          <button class="sm primary" onclick="insertImageAtSelection(true)">在选中文字前插入插图</button>
+          <span id="sel_hint" class="muted">未选中文字</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>正文自定义 CSS（追加到全书样式表末尾，优先级最高）</h2>
+        <p class="muted" style="margin-bottom:8px">
+          语法示例：<code>p { letter-spacing: 0.05em; }</code>、<code>.sty_dlg_cn { background: #eef7ee; }</code>、
+          <code>h1 { font-size: 1.4em; }</code>。与「阅读版式」页的自定义 CSS 二选一填写即可（此处的优先）。
+        </p>
+        <textarea id="edit_css" rows="8" placeholder="/* 在这里写 CSS 规则，整段会追加到 styles.css 末尾 */"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="sm primary" onclick="saveEditCss()">保存 CSS</button>
+          <button class="sm" onclick="loadEditCss()">还原已存</button>
+          <span class="muted">常用片段：</span>
+          <button class="sm" onclick="appendCss('p { text-align: justify; }\\n')">段两端对齐</button>
+          <button class="sm" onclick="appendCss('.content { max-width: 42em; margin: 0 auto; }\\n')">限宽居中</button>
+          <button class="sm" onclick="appendCss('h1 { letter-spacing: 0.15em; }\\n')">章标题字距</button>
+        </div>
       </div>
       <div class="card">
         <h2>查找替换（全书）</h2>
@@ -311,17 +336,28 @@
           <label class="inl"><input type="radio" name="imode" value="every_n" id="im_every"/> 每隔</label>
           <input type="number" id="i_every" style="width:70px"/> 章插入一页
           <label class="inl"><input type="radio" name="imode" value="after" id="im_after"/> 指定章节后插入</label>
-          <input type="text" id="i_after" placeholder="章号逗号分隔，如 10,25,40" style="width:220px;min-width:0"/>
+          <input type="text" id="i_after" placeholder="章号逗号分隔，如 10,25,40" style="width:200px;min-width:0"/>
+          <label class="inl"><input type="radio" name="imode" value="anchor" id="im_anchor"/> 按正文文字定位</label>
         </div>
+        <div class="row" style="margin-top:6px">
+          <span class="muted">按文字定位：在第</span>
+          <input type="number" id="a_ch" style="width:70px"/> 章
+          <input type="text" id="a_text" placeholder="定位文字（出现在该章即可）" style="width:220px;min-width:0"/>
+          <select id="a_pos" style="width:110px"><option value="before">之前</option><option value="after">之后</option></select>
+          <button class="sm primary" onclick="addIllustAnchor()">添加</button>
+          <span class="muted">插图页插在该章之前/之后</span>
+        </div>
+        <div id="g_anchors" style="margin-top:8px"></div>
         <div id="g_illusts" style="margin-top:8px"></div>
       </div>
       <div class="card">
         <h2>正文内插图</h2>
-        <div class="row"><button onclick="pickUpload('inline')">添加插图</button><button class="danger sm" onclick="clearAsset('inline_images')">清空</button></div>
+        <div class="row"><button onclick="pickUpload('inline')">添加插图</button><button class="danger sm" onclick="clearAsset('inline_images')">清空</button>
+          <span class="muted">也可以在「正文编辑」页选中文字后一键插入</span></div>
         <table class="tbl" id="inline_tbl" style="margin-top:8px">
-          <tr><th>图片</th><th>章号</th><th>段号</th><th>位置</th><th>宽度%</th><th>环绕方式</th><th></th></tr>
+          <tr><th>图片</th><th>定位方式</th><th>章号</th><th>段号/定位文字</th><th>位置</th><th>宽度%</th><th>环绕方式</th><th></th></tr>
         </table>
-        <p class="muted">章号/段号从 1 开始；环绕方式参考 Word：上下型=整行居中，左/右环绕=文字绕排。</p>
+        <p class="muted">章号/段号从 1 开始；「文字定位」时填一段出现在目标段落的文字即可，不必数段落。环绕方式参考 Word：上下型=整行居中，左/右环绕=文字绕排。</p>
       </div>
       <div class="card">
         <h2>目录页背景图（多张，每隔几页目录轮换）</h2>
@@ -340,6 +376,21 @@
           <button class="sm" onclick="uploadFont('toc')">上传目录字体</button>
           <button class="danger sm" onclick="setFontPath('toc','')">清除</button>
           <span class="muted">同「文字样式」页字体管理中的 toc 槽位</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          背景图尺寸 <select id="toc_bgsize" style="width:130px" onchange="onTocSizeChange()">
+            <option value="100% auto">铺满宽度</option>
+            <option value="cover">覆盖整页</option>
+            <option value="contain">完整显示</option>
+            <option value="60% auto">60% 宽</option>
+            <option value="80% auto">80% 宽</option>
+            <option value="custom">自定义宽度%</option>
+          </select>
+          <span id="toc_contain_row" style="display:none">
+            <input type="number" id="toc_contain_pct" style="width:70px" value="50"/> %
+          </span>
+          <input type="number" id="toc_bgw" style="width:80px" placeholder="最大宽px"/> px
+          <span class="muted">左为显示尺寸，右为嵌入时压缩的最大宽度（0=原图不缩放）</span>
         </div>
         <div id="g_tocbgs" style="margin-top:8px"></div>
       </div>
@@ -389,7 +440,7 @@ async function get(url) { return (await fetch(url)).json(); }
 function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
 
 // ---------- 导航 ----------
-const PAGE_LOADERS = {toc: reloadChapters, edit: reloadChapterSelect, ads: loadAdPatterns,
+const PAGE_LOADERS = {toc: reloadChapters, edit: () => reloadChapterSelect().then(loadEditCss), ads: loadAdPatterns,
   styles: loadStyles, layout: loadLayout, images: loadImages, meta: loadMeta, build: loadBuild};
 document.querySelectorAll('.nav-item').forEach(el => el.onclick = () => {
   document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
@@ -500,6 +551,7 @@ async function loadChapter() {
   if (i === '' || i == null) return;
   const c = await get('/api/chapter/' + i);
   $('chtitle').value = c.title; $('chtext').value = c.text;
+  SEL_TEXT = ''; const _h = $('sel_hint'); if (_h) _h.textContent = '未选中文字';
 }
 async function saveChapter() {
   const i = $('chsel').value;
@@ -510,6 +562,55 @@ async function saveChapter() {
   $('chsel').innerHTML = list.map(c => `<option value="${c.i}">${c.i+1}. ${esc(c.title)}</option>`).join('');
   $('chsel').value = i;
 }
+
+// ---------- 正文编辑：自定义 CSS ----------
+async function loadEditCss() {
+  BOOK = await get('/api/book'); if (!BOOK.loaded) return;
+  $('edit_css').value = (BOOK.settings.layout || {}).custom_css || '';
+}
+async function saveEditCss() {
+  const b = await get('/api/book');
+  const lay0 = (b.loaded && b.settings.layout) || {};
+  await post('/api/settings', {layout: Object.assign({}, lay0, {custom_css: $('edit_css').value})});
+  toast('CSS 已保存');
+}
+function appendCss(txt) {
+  const ta = $('edit_css');
+  ta.value = (ta.value.replace(/\s*$/, '')) + '\n' + txt;
+  ta.focus();
+}
+
+// ---------- 正文编辑：按选中文字插入插图 ----------
+let SEL_TEXT = '';
+$('chtext').addEventListener('select', trackSel);
+$('chtext').addEventListener('keyup', trackSel);
+$('chtext').addEventListener('mouseup', trackSel);
+$('chtext').addEventListener('blur', trackSel);
+function trackSel() {
+  const ta = $('chtext');
+  const t = ta.value.slice(ta.selectionStart, ta.selectionEnd).trim();
+  if (t) SEL_TEXT = t;
+  const h = $('sel_hint');
+  if (h) h.textContent = SEL_TEXT ? `已选中：「${SEL_TEXT.slice(0, 18)}${SEL_TEXT.length > 18 ? '…' : ''}」` : '未选中文字';
+}
+// 记住"待插入"的图片索引（上传后自动选中最后一张）
+async function pickInlineForSelection() { pickUpload('inline'); }
+async function insertImageAtSelection(isBefore) {
+  const ta = $('chtext');
+  trackSel();
+  let txt = ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() || SEL_TEXT;
+  if (!txt) return toast('请先在正文中选中一段文字');
+  const b = await get('/api/book');
+  const list = (b.settings.inline_images) || [];
+  if (!list.length) return toast('请先上传插图（上方「上传插图」按钮）');
+  const idx = list.length - 1;
+  const ci = parseInt($('chsel').value) || 0;
+  await fetch('/api/inline_images/' + idx, {method: 'PUT', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({mode: 'anchor', anchor_chapter: ci, anchor_text: txt,
+      anchor_pos: isBefore ? 'before' : 'after'})});
+  toast(`已插入：第${ci+1}章「${txt.slice(0, 12)}」${isBefore ? '前' : '后'}`);
+}
+
 function insertNote() {
   const ta = $('chtext');
   const e = ta.selectionEnd;
@@ -717,26 +818,76 @@ async function loadImages() {
   $('toc_alpha').value = s.panel_alpha ?? 0.6; $('toc_alpha_v').textContent = (+($('toc_alpha').value)).toFixed(2);
   const _tocf = (s.fonts || {}).toc || '';
   $('toc_font_name').textContent = _tocf ? _tocf.split(/[\\/]/).pop() : '未设置（跟随正文）';
+  const _abg = s.toc_bg_size || '100% auto';
+  const _bsel = $('toc_bgsize');
+  const presets = ['100% auto', 'cover', 'contain', '60% auto', '80% auto'];
+  if (presets.includes(_abg)) { _bsel.value = _abg; } else { _bsel.value = 'custom'; }
+  $('toc_bgw').value = s.toc_bg_w ?? 880;
+  $('toc_contain_pct').value = (/^(\d+)%/.exec(_abg) || [0, 100])[1];
+  $('toc_contain_row').style.display = (_bsel.value === 'custom') ? '' : 'none';
   $('g_tocbgs').innerHTML = (s.toc_bgs||[]).map(x => `<span class="pill">${esc(x.split(/[\\/]/).pop())}</span>`).join('') || '<span class="muted">未添加</span>';
   document.querySelectorAll('input[name=quality]').forEach(r => r.checked = +r.value === s.image_quality);
-  $('inline_tbl').innerHTML = '<tr><th>图片</th><th>章号</th><th>段号</th><th>位置</th><th>宽度%</th><th>环绕方式</th><th></th></tr>' +
-    (s.inline_images||[]).map((im, i) =>
-    `<tr><td>${esc(im.path.split(/[\\/]/).pop())}</td>
-     <td><input type="number" value="${im.chapter+1}" style="width:60px" onchange="updInline(${i},{chapter:+this.value-1})"/></td>
-     <td><input type="number" value="${im.para+1}" style="width:60px" onchange="updInline(${i},{para:+this.value-1})"/></td>
-     <td><select onchange="updInline(${i},{where:this.value})">
-       <option value="after" ${im.where==='after'?'selected':''}>段后</option>
-       <option value="before" ${im.where==='before'?'selected':''}>段前</option></select></td>
+  $('inline_tbl').innerHTML = '<tr><th>图片</th><th>定位方式</th><th>章号</th><th>段号 / 定位文字</th><th>位置</th><th>宽度%</th><th>环绕方式</th><th></th></tr>' +
+    (s.inline_images||[]).map((im, i) => {
+      const isAnchor = im.mode === 'anchor';
+      return `<tr><td>${esc(im.path.split(/[\\/]/).pop())}</td>
+     <td><select onchange="updInline(${i},{mode:this.value});loadImages()">
+       <option value="para" ${!isAnchor?'selected':''}>段号</option>
+       <option value="anchor" ${isAnchor?'selected':''}>文字定位</option></select></td>
+     <td><input type="number" value="${(isAnchor ? (im.anchor_chapter ?? 0) : im.chapter) + 1}" style="width:60px"
+       onchange="updInline(${i},${isAnchor?'{anchor_chapter:+this.value-1}':'{chapter:+this.value-1}'})"/></td>
+     <td>${isAnchor
+        ? `<input type="text" value="${esc(im.anchor_text||'').replace(/"/g,'&quot;')}" placeholder="选中段落里的文字" style="width:180px" onchange="updInline(${i},{anchor_text:this.value})"/>`
+        : `<input type="number" value="${im.para+1}" style="width:60px" onchange="updInline(${i},{para:+this.value-1})"/>`}</td>
+     <td><select onchange="updInline(${i},${isAnchor?'{anchor_pos:this.value}':'{where:this.value}'})">
+       <option value="after" ${(isAnchor ? im.anchor_pos : im.where)==='after'?'selected':''}>之后</option>
+       <option value="before" ${(isAnchor ? im.anchor_pos : im.where)==='before'?'selected':''}>之前</option></select></td>
      <td><input type="number" value="${im.width_pct}" style="width:60px" onchange="updInline(${i},{width_pct:+this.value})"/></td>
      <td><select onchange="updInline(${i},{wrap:this.value})">
        <option value="block" ${im.wrap==='block'?'selected':''}>上下型</option>
        <option value="float_left" ${im.wrap==='float_left'?'selected':''}>左环绕</option>
        <option value="float_right" ${im.wrap==='float_right'?'selected':''}>右环绕</option></select></td>
-     <td><button class="sm danger" onclick="delInline(${i})">删</button></td></tr>`).join('');
+     <td><button class="sm danger" onclick="delInline(${i})">删</button></td></tr>`;
+    }).join('');
+  // 全屏插图定位方式
+  const imode = ic.mode || 'every_n';
+  (imode === 'anchor' ? $('im_anchor') : imode === 'after' ? $('im_after') : $('im_every')).checked = true;
+  $('g_anchors').innerHTML = (ic.anchors||[]).map((a, i) =>
+    `<span class="pill">第${(a.chapter||0)+1}章「${esc((a.text||'').slice(0,10))}」${a.pos==='before'?'前':'后'}
+      <a href="javascript:delIllustAnchor(${i})" style="color:#d92d20;text-decoration:none"> ✕</a></span>`).join('')
+    || '<span class="muted">未设置文字定位</span>';
 }
 function selEdge(k) {
   EDGE_SEL = k;
   document.querySelectorAll('.edge-opt').forEach(x => x.classList.toggle('sel', x.dataset.k === k));
+}
+// 目录背景尺寸：custom 时显示百分比输入
+function onTocSizeChange() {
+  $('toc_contain_row').style.display = ($('toc_bgsize').value === 'custom') ? '' : 'none';
+}
+function curTocSize() {
+  const v = $('toc_bgsize').value;
+  if (v === 'custom') return (parseFloat($('toc_contain_pct').value) || 50) + '% auto';
+  return v;
+}
+// 全屏插图：按正文文字定位
+async function addIllustAnchor() {
+  const ch = parseInt($('a_ch').value);
+  const text = $('a_text').value.trim();
+  if (!ch || !text) return toast('请填写章号和定位文字');
+  const b = await get('/api/book');
+  const arr = ((b.settings.illust || {}).anchors || []).slice();
+  arr.push({chapter: ch - 1, text, pos: $('a_pos').value});
+  await post('/api/settings', {illust: {anchors: arr, mode: 'anchor'}});
+  $('im_anchor').checked = true; $('a_text').value = '';
+  toast('已添加文字定位'); loadImages();
+}
+async function delIllustAnchor(i) {
+  const b = await get('/api/book');
+  const arr = ((b.settings.illust || {}).anchors || []).slice();
+  arr.splice(i, 1);
+  await post('/api/settings', {illust: {anchors: arr}});
+  loadImages();
 }
 async function updInline(i, d) {
   await fetch('/api/inline_images/' + i, {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d)});
@@ -752,6 +903,8 @@ async function saveImages() {
     image_quality: q, toc_bg_rotate: nv($('toc_rotate').value, s.toc_bg_rotate ?? 1) || 1,
     panel_alpha: Math.max(0, Math.min(0.95, nv($('toc_alpha').value, s.panel_alpha ?? 0.6))),
     cover_w: nv($('cover_w').value, s.cover_w ?? 1200),
+    toc_bg_w: nv($('toc_bgw').value, s.toc_bg_w ?? 880),
+    toc_bg_size: curTocSize(),
     header: {enabled: $('h_en').checked, rotate: $('h_rotate').checked,
       width: nv($('h_w').value, h0.width ?? 1080), height: nv($('h_h').value, h0.height ?? 500),
       margin_t: nv($('h_mt').value, h0.margin_t ?? 0), margin_b: nv($('h_mb').value, h0.margin_b ?? 0),
@@ -759,7 +912,7 @@ async function saveImages() {
       edge: EDGE_SEL || h0.edge || 'cloud'},
     illust: {rotate: $('i_rotate').checked, width_pct: nv($('i_wp').value, i0.width_pct ?? 100),
       every_n: nv($('i_every').value, i0.every_n ?? 25),
-      mode: $('im_after').checked ? 'after' : 'every_n', after},
+      mode: $('im_anchor').checked ? 'anchor' : ($('im_after').checked ? 'after' : 'every_n'), after},
   });
   toast(r.error || '图片设置已保存');
 }
@@ -767,7 +920,10 @@ async function saveImages() {
 // ---------- 生成 ----------
 async function startBuild() {
   await saveLayout(); await saveImages();
-  const r = await post('/api/build', {output_dir: $('out_dir').value.trim()});
+  // 记住本次保存位置，下次打开自动回填
+  const od = $('out_dir').value.trim();
+  if (od) await post('/api/settings', {output_dir: od});
+  const r = await post('/api/build', {output_dir: od});
   if (r.error) return toast(r.error);
   $('buildlog').style.display = 'block'; $('buildlog').textContent = '构建中…';
   $('buildresult').innerHTML = '';
@@ -776,7 +932,10 @@ async function startBuild() {
 }
 async function loadBuild() {
   const b = await get('/api/book'); if (!b.loaded) return;
-  $('out_dir').value = b.settings.output_dir || '';
+  const od = b.settings.output_dir || '';
+  // 回填上次保存位置；空则提示默认目录
+  $('out_dir').value = od;
+  $('out_dir').placeholder = od ? '' : '留空 = 默认目录（工坊 work\\output）';
 }
 async function saveOutDir() {
   const r = await post('/api/settings', {output_dir: $('out_dir').value.trim()});

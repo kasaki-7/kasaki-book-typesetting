@@ -14,7 +14,8 @@ STYLE_PRESETS = [
     {"key": "dlg_jp1", "name": "直角引号「…」", "scope": "inline", "regex": "「[^」]*」"},
     {"key": "dlg_jp2", "name": "双直角引号『…』", "scope": "inline", "regex": "『[^』]*』"},
     {"key": "paren",   "name": "括号文字（…）",  "scope": "inline", "regex": "（[^（）]*）"},
-    {"key": "author",  "name": "作者有话说（整段）", "scope": "block", "regex": "^作者有话[要想]说[：:].*$"},
+    {"key": "author",  "name": "作者有话说（整段）", "scope": "block",
+     "regex": "【?(?:📢)?(?:作者有话要说|作者有话说|作家有话说|作家想说的话|作者想说的话|作者的话)(?::|：)?】?[\\s\\S]*?(?=\\r?\\n\\s*(?:[（(]?全书完[）)]?)|\\r?\\n\\s*\\r?\\n|$)"},
 ]
 
 AD_PRESETS = {
@@ -31,10 +32,7 @@ EDGE_STYLES = [
     ("plain",      "方正"),
     ("cloud",      "云边"),
     ("mist",       "雾边"),
-    ("splash",     "溅墨"),
-    ("diag",       "斜切"),
     ("brush",      "拖墨"),
-    ("splatter",   "迸点"),
     ("roughoval",  "糙圆"),
     ("watercolor", "晕染"),
     ("film",       "胶片"),
@@ -59,11 +57,16 @@ DEFAULT_SETTINGS = {
     # {key,name,scope,regex,enabled,font,color,size,bold,italic}
     "ads_patterns": sum(AD_PRESETS.values(), []),
     "fonts": {"body": "", "dlg": "", "title": "", "toc": ""},
-    "cover": "", "cover_w": 1200, "toc_bgs": [],
+    "cover": "", "cover_w": 1200, "toc_bgs": [], "toc_bg_w": 880, "toc_bg_size": "100% auto",
     "header": {"enabled": True, "rotate": True, "images": [], "width": 1080, "height": 500,
                "margin_t": 0, "margin_r": 0, "margin_b": 0, "margin_l": 0, "edge": "cloud"},
-    "illust": {"images": [], "mode": "every_n", "every_n": 25, "after": [], "rotate": True, "width_pct": 100},
-    "inline_images": [],  # {path,chapter,para,where,width_pct,wrap}
+    # illust/illust2：全屏插图页。"mode": every_n 每 N 章 / after 指定章后 / anchor 按文字或章节定位
+    #   anchor: {chapters:[章索引], text:"定位文字", pos:"after|before"}  pos=文字位置，章节前后由 pos 决定
+    "illust": {"images": [], "mode": "every_n", "every_n": 25, "after": [], "rotate": True,
+               "width_pct": 100, "anchors": []},
+    # inline_images：{path, chapter, para, where(before/after), width_pct, wrap}
+    #   也支持 {path, anchor_chapter, anchor_text, anchor_pos(before/after), ...} 按正文文字定位
+    "inline_images": [],
     "image_quality": 100,  # 30/50/70/100
     "meta": {"intro": "", "publisher": "", "isbn": "", "pubdate": "", "language": "zh-CN", "tags": []},
 }
@@ -661,7 +664,7 @@ def make_header(src, out_base, cfg, quality=100, seed=7):
 def make_tocbg(src, out, maxw=880, quality=100):
     Image, *_ = _pil()
     im = Image.open(src).convert("RGB")
-    if im.width > maxw:
+    if maxw and maxw > 0 and im.width > maxw:
         im = im.resize((maxw, int(im.height * maxw / im.width)), Image.LANCZOS)
     save_compressed(im, out, quality)
     return os.path.basename(out)
@@ -822,12 +825,23 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
             images["images/" + fn] = os.path.join(assets_dir, fn)
 
     toc_bgs = []
+    toc_bg_maxw = int(st.get("toc_bg_w") or 0)   # 0 = 不缩放
     for i, g in enumerate(st.get("toc_bgs", [])):
         if os.path.isfile(g):
             out = os.path.join(assets_dir, f"tocbg{i}.jpg")
-            fn = make_tocbg(g, out, quality=quality)
+            fn = make_tocbg(g, out, maxw=toc_bg_maxw, quality=quality)
             toc_bgs.append(fn)
             images["images/" + fn] = os.path.join(assets_dir, fn)
+
+    def find_para(ci, text, pos="after"):
+        """在章 ci 的段落里找第一条包含 text 的段落，返回 (段索引, 段前/段后)。
+        pos: after=该段之后插入；before=该段之前插入。找不到返回 None。"""
+        if ci < 0 or ci >= len(chapters) or not text:
+            return None
+        for j, p in enumerate(chapters[ci]["paras"]):
+            if text in p:
+                return (j, "after" if pos == "after" else "before")
+        return None
 
     inline_map = {}   # chapter -> {para -> [(where, html)]}
     for iid, im_cfg in enumerate(st.get("inline_images", [])):
@@ -845,8 +859,17 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
             h_html = f'<img class="fig fr" src="../images/{fn}" style="width:{wp}%" alt="插图"/>'
         else:
             h_html = f'<div class="fig block"><img src="../images/{fn}" style="width:{wp}%" alt="插图"/></div>'
-        ci, pi = int(im_cfg.get("chapter", 0)), int(im_cfg.get("para", 0))
-        inline_map.setdefault(ci, {}).setdefault(pi, []).append((im_cfg.get("where", "after"), h_html))
+        # 优先按锚定文字定位（正文编辑里选中文字插入）
+        hit = None
+        if im_cfg.get("anchor_text"):
+            hit = find_para(int(im_cfg.get("anchor_chapter") or 0), im_cfg["anchor_text"],
+                            im_cfg.get("anchor_pos", "after"))
+        if hit:
+            ci, (pi, where) = int(im_cfg.get("anchor_chapter") or 0), hit
+        else:
+            ci, pi = int(im_cfg.get("chapter", 0)), int(im_cfg.get("para", 0))
+            where = im_cfg.get("where", "after")
+        inline_map.setdefault(ci, {}).setdefault(pi, []).append((where, h_html))
 
     # ---- CSS ----
     css = []
@@ -888,7 +911,10 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
     css.append("img.fig.fr { float: right; margin: 0.2em 0 0.6em 1em; }")
     css.append(".coverpage, .fullpage { margin: 0; padding: 0; text-align: center; }")
     css.append(".coverpage img { width: 100%; display: block; }")
-    css.append("body.tocpage { background-size: 100% auto; background-repeat: repeat-y; margin: 0; padding: 0; }")
+    # 目录背景：toc_bg_size 可为 cover / contain / 100% auto / 具体宽度百分比
+    tbg_size = (st.get("toc_bg_size") or "100% auto")
+    css.append(f"body.tocpage {{ background-size: {tbg_size}; background-repeat: repeat-y;"
+               " background-position: top center; margin: 0; padding: 0; }")
     toc_font = 'font-family: "toc";' if "toc" in fonts else ""
     css.append(f".toc-inner {{ width: 70%; margin: 8% auto; background: rgba(255,255,255,{st['panel_alpha']});"
                f" border-radius: 12px; padding: 1.5em 1.2em; {toc_font} font-weight: bold; }}")
@@ -973,14 +999,24 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
         # 插图页
         if illusts:
             mode = icfg.get("mode", "every_n")
+            insert_after = False
+            gi = 0
             if mode == "every_n":
                 every = int(icfg.get("every_n", 0) or 0)
                 insert_after = every > 0 and (i + 1) % every == 0 and i + 1 < len(chapters)
                 gi = (i + 1) // max(1, every) - 1
-            else:
+            elif mode == "after":
                 after_list = [int(x) for x in icfg.get("after", [])]
                 insert_after = i in after_list
                 gi = after_list.index(i) if insert_after else 0
+            else:   # anchor：按正文文字/章节定位（每章检查是否命中）
+                hits = [(k, a) for k, a in enumerate(icfg.get("anchors", []))
+                        if int(a.get("chapter") or 0) == i and a.get("text")]
+                for k, a in hits:
+                    if find_para(i, a["text"], a.get("pos", "after")):
+                        add_page(f"ill{i}_{k}", f"illust_{i}_{k}.xhtml", PAGE % ("插图", "",
+                            f'<body><div class="fullpage"><img src="images/{illusts[k % len(illusts)] if icfg.get("rotate", True) else illusts[0]}"'
+                            f' style="width:{int(icfg.get("width_pct", 100))}%" alt="插图"/></div></body>'))
             if insert_after:
                 g = illusts[gi % len(illusts)] if icfg.get("rotate", True) else illusts[0]
                 wp = int(icfg.get("width_pct", 100))
