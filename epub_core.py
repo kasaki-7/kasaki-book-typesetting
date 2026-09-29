@@ -743,14 +743,14 @@ def style_css(s):
 
 # ================= EPUB 组装 =================
 
-def subset_font(src, chars_file, out, pylibs=""):
+def subset_font(src, chars_file, out, pylibs):
     env = dict(os.environ)
-    if pylibs:
-        env["PYTHONPATH"] = pylibs + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = pylibs
     r = subprocess.run(
         [sys.executable, "-m", "fontTools.subset", src,
          "--text-file=" + chars_file, "--output-file=" + out,
-         "--layout-features=*", "--no-hinting"],
+         "--layout-features=*", "--no-hinting",
+         "--drop-tables+=SVG,sbix"],
         capture_output=True, text=True, env=env)
     if r.returncode != 0:
         raise RuntimeError("字体子集化失败: " + (r.stderr or r.stdout)[-500:])

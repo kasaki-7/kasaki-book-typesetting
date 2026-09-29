@@ -1,3 +1,4 @@
 flask>=3.0
 pillow>=10.0
 fonttools>=4.40
+lxml>=4.9
