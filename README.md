@@ -4,6 +4,8 @@
 
 纯本地运行，不联网、不上传任何数据。界面为网页（Flask + 单页前端），操作方式类似简化版 Calibre。
 
+提供两种用法：**桌面版**（本机跑 Flask，功能最全）与 **[手机版](mobile/)**（单个 HTML 文件，手机浏览器打开即用，无需电脑）。
+
 ## 界面预览
 
 **导入书籍**（TXT 按正则自动切章 / EPUB 按目录重切）：
@@ -14,9 +16,19 @@
 
 ![字体与文字样式](docs/fonts-and-styles.png)
 
-**封面与章节头图**（14 种边缘蒙版样式，每种带示意图）：
+**封面与章节头图**（11 种边缘蒙版样式，每种带示意图）：
 
 ![封面与章节图片](docs/cover-and-images.png)
+
+## 📱 手机版（无需电脑）
+
+仓库 [`mobile/`](mobile/) 目录提供一个**单文件网页** `epub-studio-mobile.html`（约 940KB）：传到手机用浏览器打开即可排版，**不装 App、不开电脑、不联网**。功能覆盖导入切章、字体上传（浏览器内自动子集化）、文字样式规则、11 种头图蒙版、封面插图、版式设置与 EPUB 生成。
+
+| 导入书籍 | 字体与文字样式 | 头图与边缘样式 |
+|:---:|:---:|:---:|
+| ![导入](docs/mobile/02-import.png) | ![样式](docs/mobile/03-style.png) | ![图片](docs/mobile/04-image.png) |
+
+直接用：下载 [`mobile/epub-studio-mobile.html`](mobile/epub-studio-mobile.html) 传到手机即可；详细说明见 [mobile/README.md](mobile/README.md)。
 
 ## 功能一览
 
@@ -60,6 +72,11 @@ epub-studio/
 ├── epub_core.py     # 构建核心（解析/样式引擎/蒙版/EPUB 组装/字体子集化）
 ├── static/
 │   └── index.html   # 单页前端
+├── mobile/          # 手机版单文件网页（源码 + 依赖 + 构建产物）
+│   ├── template.html            # 页面模板
+│   ├── build.py                 # 注入脚本（产出单文件 HTML）
+│   ├── lib/                     # jszip.min.js + hb-subset.wasm
+│   └── epub-studio-mobile.html  # 构建产物，可直接传手机使用
 ├── docs/            # README 截图
 ├── requirements.txt
 └── work/            # 运行时自动生成：当前书籍、素材、字体、输出（已在 .gitignore）
