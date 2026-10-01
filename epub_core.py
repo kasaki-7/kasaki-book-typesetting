@@ -61,7 +61,7 @@ DEFAULT_SETTINGS = {
     "ads_patterns": sum(AD_PRESETS.values(), []),
     "fonts": {"body": "", "dlg": "", "title": "", "toc": ""},
     "cover": "", "cover_w": 1200, "toc_bgs": [], "toc_bg_w": 880, "toc_bg_size": "100% auto",
-    # header.assign：每张头图可指定章号（1开始，如 "1,4,9"），命中章固定用该图，其余章按 rotate 规则
+    # header.assign：每张头图可指定章号（1开始，如 "1-20,25,30-40"，支持区间），命中章固定用该图，其余章按 rotate 规则
     "header": {"enabled": True, "rotate": True, "images": [], "assign": [], "width": 1080, "height": 500,
                "margin_t": 0, "margin_r": 0, "margin_b": 0, "margin_l": 0, "edge": "cloud"},
     # illust/illust2：全屏插图页。"mode": every_n 每 N 章 / after 指定章后 / anchor 按文字或章节定位
@@ -858,7 +858,14 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
             if img_i not in img_files:
                 continue
             for cs in re.split(r"[,，、;；\s]+", str(a.get("chapters") or "")):
-                if cs.strip().isdigit():
+                cs = cs.strip()
+                m = re.fullmatch(r"(\d+)[-~～—–－到](\d+)", cs)   # 章号区间，如 1-20 / 3~8
+                if m:
+                    lo, hi = int(m.group(1)), int(m.group(2))
+                    for cn in range(min(lo, hi), max(lo, hi) + 1):
+                        if cn >= 1:
+                            header_fixed[cn - 1] = img_files[img_i]
+                elif cs.isdigit():
                     cn = int(cs)
                     if cn >= 1:
                         header_fixed[cn - 1] = img_files[img_i]
