@@ -812,7 +812,9 @@ function fileInput(kind) {
   const el = $('filePicker');
   if (kind === 'header' || kind === 'illust' || kind === 'tocbg' ||
       kind === 'inline_before' || kind === 'inline_after') el.multiple = true; else el.multiple = false;
-  el.accept = kind === 'txt' ? '.txt,text/plain'
+  const isFontKind = /^font_/.test(kind);
+  el.accept = isFontKind ? ''            // 字体：不加过滤，避免手机浏览器置灰 ttf/otf
+            : kind === 'txt' ? '.txt,text/plain'
             : kind === 'epub' ? '.epub,application/epub+zip'
             : kind === 'settings' ? '.json,application/json'
             : 'image/*';
@@ -1469,9 +1471,22 @@ async function initHB() {
   HB = r.instance.exports;
   return HB;
 }
+function isFontBytes(b) {
+  if (!b || b.byteLength < 4) return false;
+  const t = String.fromCharCode(b[0], b[1], b[2], b[3]);
+  // sfnt: 0x00010000 / 'OTTO' / 'true' / 'ttcf'；WOFF / WOFF2
+  if (t === 'OTTO' || t === 'true' || t === 'ttcf' || t === 'wOFF' || t === 'wOF2') return true;
+  return b[0] === 0 && b[1] === 1 && b[2] === 0 && b[3] === 0;
+}
 async function addFont(slot, file) {
   if (file.size > 50 * 1024 * 1024) toast('字体文件超过 50MB，可能影响性能');
   const buf = await readAsBytes(file);
+  if (!isFontBytes(buf)) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (['ttf','otf','ttc','woff','woff2'].indexOf(ext) < 0)
+      throw new Error('不是有效的字体文件，请选择 TTF / OTF / TTC / WOFF / WOFF2 文件');
+    toast('提示：未识别到字体特征，已按扩展名 .' + ext + ' 采用');
+  }
   S.fonts[slot] = buf;
   S.fontNames[slot] = file.name;
   try { save(); } catch(e) { toast('字体较大，保存到本地可能失败'); }
