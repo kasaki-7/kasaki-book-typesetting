@@ -726,9 +726,12 @@ async function loadStyles() {
   const n = b.settings.notes || {};
   $('n_font').innerHTML = fontOptions(n.font || ''); $('n_color').value = n.color || '#000000';
   $('n_size').value = n.size ?? 0.85; $('n_bold').checked = !!n.bold; $('n_italic').checked = !!n.italic;
-  const icons = await get('/api/icons');
+  const icons = await get('/api/icons').catch(() => null);
+  // 接口失联（旧版服务未重启等）时回退到内置 8 图标，保证下拉可用
+  const iconList = Array.isArray(icons) && icons.length ? icons :
+    ['查看', '船', '书', '树', '树叶', '数据', '小鸟', '音符'].map(k => ({key: k, name: k}));
   $('n_icon').innerHTML = '<option value="">默认 [注N] 文字</option>' +
-    (icons || []).map(ic => `<option value="${esc(ic.key)}" ${ic.key===n.icon?'selected':''}>${esc(ic.name)}</option>`).join('');
+    iconList.map(ic => `<option value="${esc(ic.key)}" ${ic.key===n.icon?'selected':''}>${esc(ic.name)}</option>`).join('');
   previewNoteIcon();
   renderStyles();
 }
