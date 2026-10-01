@@ -177,6 +177,13 @@
           <button class="sm primary" onclick="insertImageAtSelection(true)">在选中文字前插入插图</button>
           <span id="sel_hint" class="muted">未选中文字</span>
         </div>
+        <div class="row" style="margin-top:6px">
+          <span class="muted">选中文字改字体：</span>
+          <select id="tf_font" class="fontsel" style="max-width:160px"></select>
+          <button class="sm primary" onclick="applyFontToSelection()">应用到选中文字</button>
+          <span class="muted">需先在「文字样式规则」页上传字体（字体文件会被自动子集化）</span>
+        </div>
+        <div id="tf_list" style="margin-top:8px"></div>
       </div>
       <div class="card">
         <h2>正文自定义 CSS（追加到全书样式表末尾，优先级最高）</h2>
@@ -242,13 +249,18 @@
       </div>
       <div class="card" id="notes_card">
         <h2>注释样式（正文编辑中用 {{注:内容}} 插入的注释）</h2>
-        <p class="muted" style="margin-bottom:10px">控制弹出注释文字的字体、颜色、字号与粗斜体；保存版式设置时一并生效。</p>
+        <p class="muted" style="margin-bottom:10px">控制弹出注释文字的字体、颜色、字号与粗斜体；标记图标可把正文中的 [注N] 文字标记替换为小图标。</p>
         <div class="row">
           字体 <select id="n_font" class="fontsel"></select>
           颜色 <input type="color" id="n_color"/>
           字号 em <input type="number" id="n_size" step="0.05"/>
           <label class="inl"><input type="checkbox" id="n_bold"/> 加粗</label>
           <label class="inl"><input type="checkbox" id="n_italic"/> 斜体</label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          标记图标 <select id="n_icon" onchange="previewNoteIcon()"></select>
+          <img id="n_icon_prev" alt="" style="height:24px;vertical-align:middle;display:none"/>
+          <span class="muted">选「默认」则显示 [注1] [注2] 文字标记</span>
           <button class="sm primary" onclick="saveNotes()">保存注释样式</button>
         </div>
       </div>
@@ -310,7 +322,7 @@
           <button onclick="pickUpload('header')">添加头图（可多选）</button>
           <button class="danger sm" onclick="clearAsset('headers')">清空</button>
           <label class="inl"><input type="checkbox" id="h_en"/> 启用</label>
-          <label class="inl"><input type="checkbox" id="h_rotate"/> 逐章轮换（不选则固定第1张）</label>
+          <label class="inl"><input type="checkbox" id="h_rotate"/> 逐章轮换（不选则固定第1张；也可在下方为指定章节固定某张图）</label>
         </div>
         <div class="grid4" style="margin-top:10px">
           <div><label class="fld">宽 px</label><input type="number" id="h_w"/></div>
@@ -440,7 +452,7 @@ async function get(url) { return (await fetch(url)).json(); }
 function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
 
 // ---------- 导航 ----------
-const PAGE_LOADERS = {toc: reloadChapters, edit: () => reloadChapterSelect().then(loadEditCss), ads: loadAdPatterns,
+const PAGE_LOADERS = {toc: reloadChapters, edit: () => reloadChapterSelect().then(loadEditCss).then(loadTfUI), ads: loadAdPatterns,
   styles: loadStyles, layout: loadLayout, images: loadImages, meta: loadMeta, build: loadBuild};
 document.querySelectorAll('.nav-item').forEach(el => el.onclick = () => {
   document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
@@ -580,6 +592,35 @@ function appendCss(txt) {
   ta.focus();
 }
 
+// ---------- 正文编辑：选中文字改字体 ----------
+async function loadTfUI() {
+  const b = await get('/api/book'); if (!b.loaded) return;
+  BOOK = b;
+  const keys = Object.keys(b.settings.fonts || {}).filter(k => b.settings.fonts[k]);
+  const cur = $('tf_font').value;
+  $('tf_font').innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+  if (keys.includes(cur)) $('tf_font').value = cur;
+  $('tf_list').innerHTML = (b.settings.text_fonts || []).map((tf, i) => {
+    const fname = (b.settings.fonts[tf.font] || '').split(/[\\/]/).pop();
+    return `<span class="pill">第${(tf.chapter||0)+1}章「${esc(tf.text.slice(0,10))}${tf.text.length>10?'…':''}」→ ${esc(tf.font)}
+      <a href="javascript:delTf(${i})" style="color:#d92d20;text-decoration:none"> ✕</a></span>`;
+  }).join('') || '<span class="muted">暂无选字规则</span>';
+}
+async function applyFontToSelection() {
+  const ta = $('chtext');
+  trackSel();
+  const txt = ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() || SEL_TEXT;
+  const font = $('tf_font').value;
+  if (!txt) return toast('请先在正文中选中一段文字');
+  if (!font) return toast('请先在「文字样式规则」页上传至少一个字体');
+  const ci = parseInt($('chsel').value) || 0;
+  const r = await post('/api/text_fonts', {chapter: ci, text: txt, font});
+  if (r.error) return toast(r.error);
+  toast(`已应用：第${ci+1}章「${txt.slice(0, 12)}${txt.length > 12 ? '…' : ''}」→ ${font}`);
+  loadTfUI();
+}
+async function delTf(i) { await fetch('/api/text_fonts/' + i, {method: 'DELETE'}); loadTfUI(); }
+
 // ---------- 正文编辑：按选中文字插入插图 ----------
 let SEL_TEXT = '';
 $('chtext').addEventListener('select', trackSel);
@@ -685,11 +726,21 @@ async function loadStyles() {
   const n = b.settings.notes || {};
   $('n_font').innerHTML = fontOptions(n.font || ''); $('n_color').value = n.color || '#000000';
   $('n_size').value = n.size ?? 0.85; $('n_bold').checked = !!n.bold; $('n_italic').checked = !!n.italic;
+  const icons = await get('/api/icons');
+  $('n_icon').innerHTML = '<option value="">默认 [注N] 文字</option>' +
+    (icons || []).map(ic => `<option value="${esc(ic.key)}" ${ic.key===n.icon?'selected':''}>${esc(ic.name)}</option>`).join('');
+  previewNoteIcon();
   renderStyles();
+}
+function previewNoteIcon() {
+  const v = $('n_icon').value, img = $('n_icon_prev');
+  if (v) { img.src = '/icons/' + encodeURIComponent(v) + '.png'; img.style.display = ''; }
+  else img.style.display = 'none';
 }
 async function saveNotes() {
   const r = await post('/api/settings', {notes: {font: $('n_font').value, color: $('n_color').value,
-    size: +$('n_size').value, bold: $('n_bold').checked, italic: $('n_italic').checked}});
+    size: +$('n_size').value, bold: $('n_bold').checked, italic: $('n_italic').checked,
+    icon: $('n_icon').value}});
   toast(r.error || '注释样式已保存');
 }
 function addPresetStyle(key) {
@@ -809,7 +860,14 @@ async function loadImages() {
   $('edge_grid').innerHTML = edges.map(e =>
     `<div class="edge-opt ${e.key===EDGE_SEL?'sel':''}" data-k="${e.key}" onclick="selEdge('${e.key}')">
       <img src="/api/edge_preview/${e.key}.png" loading="lazy" alt="${esc(e.name)}"/>${esc(e.name)}</div>`).join('');
-  $('g_headers').innerHTML = h.images.map(x => `<span class="pill">${esc(x.split(/[\\/]/).pop())}</span>`).join('') || '<span class="muted">未添加</span>';
+  $('g_headers').innerHTML = h.images.length ? h.images.map((x, i) => {
+    const asg = (h.assign || []).find(a => +a.img === i);
+    const val = asg ? esc(asg.chapters || '') : '';
+    return `<div class="row" style="margin:4px 0"><span class="pill" style="min-width:120px">${esc(x.split(/[\\/]/).pop())}</span>
+      <span class="muted">固定用于章（从1计，逗号分隔）</span>
+      <input type="text" value="${val}" placeholder="如 1,4,9（留空=参与轮换）" style="width:180px;min-width:0"
+        onchange="updHeaderAssign(${i}, this.value)"/></div>`;
+  }).join('') : '<span class="muted">未添加</span>';
   $('i_rotate').checked = ic.rotate; $('i_wp').value = ic.width_pct;
   $('i_every').value = ic.every_n; $('i_after').value = (ic.after||[]).map(x=>x+1).join(',');
   (ic.mode === 'after' ? $('im_after') : $('im_every')).checked = true;
@@ -860,6 +918,17 @@ async function loadImages() {
 function selEdge(k) {
   EDGE_SEL = k;
   document.querySelectorAll('.edge-opt').forEach(x => x.classList.toggle('sel', x.dataset.k === k));
+}
+// 头图按章指定：img=图片索引，chapters 为 1 基章号字符串（空 = 移除该图的指定）
+async function updHeaderAssign(img, chapters) {
+  const b = await get('/api/book');
+  const arr = ((((b.settings || {}).header || {}).assign) || []).slice();
+  const idx = arr.findIndex(a => +a.img === img);
+  const val = (chapters || '').trim();
+  if (idx >= 0) { if (val) arr[idx].chapters = val; else arr.splice(idx, 1); }
+  else if (val) arr.push({img, chapters: val});
+  await post('/api/settings', {header: {assign: arr}});
+  toast(val ? `头图 ${img + 1} 已固定于第 ${val} 章` : `头图 ${img + 1} 已恢复轮换`);
 }
 // 目录背景尺寸：custom 时显示百分比输入
 function onTocSizeChange() {

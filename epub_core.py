@@ -51,14 +51,18 @@ DEFAULT_SETTINGS = {
                "para_spacing": 0.35, "line_height": 1.8, "indent_em": 2.0,
                "drop_cap": False, "drop_size": 2.8, "drop_font": "", "drop_color": "#000000",
                "custom_css": ""},
-    "notes": {"font": "", "color": "#000000", "size": 0.85, "bold": False, "italic": False},
+    # text_fonts：选中文字指定字体 {chapter(0基), text(精确文字), font(字体key)}
+    "text_fonts": [],
+    "notes": {"font": "", "color": "#000000", "size": 0.85, "bold": False, "italic": False,
+              "icon": ""},   # icon: 注释标记小图标（icons/ 下的文件名，空=默认 [注N] 文字标记）
     "styles": [dict(STYLE_PRESETS[0], enabled=True, font="dlg", color="#000000",
                     size=1.0, bold=False, italic=False)],   # 默认启用中文双引号→dlg字体，可在界面增删
     # {key,name,scope,regex,enabled,font,color,size,bold,italic}
     "ads_patterns": sum(AD_PRESETS.values(), []),
     "fonts": {"body": "", "dlg": "", "title": "", "toc": ""},
     "cover": "", "cover_w": 1200, "toc_bgs": [], "toc_bg_w": 880, "toc_bg_size": "100% auto",
-    "header": {"enabled": True, "rotate": True, "images": [], "width": 1080, "height": 500,
+    # header.assign：每张头图可指定章号（1开始，如 "1,4,9"），命中章固定用该图，其余章按 rotate 规则
+    "header": {"enabled": True, "rotate": True, "images": [], "assign": [], "width": 1080, "height": 500,
                "margin_t": 0, "margin_r": 0, "margin_b": 0, "margin_l": 0, "edge": "cloud"},
     # illust/illust2：全屏插图页。"mode": every_n 每 N 章 / after 指定章后 / anchor 按文字或章节定位
     #   anchor: {chapters:[章索引], text:"定位文字", pos:"after|before"}  pos=文字位置，章节前后由 pos 决定
@@ -704,8 +708,20 @@ def make_inline(src, out_base, quality=100, maxw=1080):
 
 NOTE_RE = re.compile(r"\{\{注:(.*?)\}\}", re.S)
 
-def para_to_html(p, styles):
-    """返回 (段落html, [注释...], block_style_keys)"""
+# 内置注释标记小图标目录（epub-studio/icons/*.png）
+ICONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons")
+
+def list_note_icons():
+    """返回内置注释图标 [{"key": 文件名去扩展名, "name": key}]"""
+    if not os.path.isdir(ICONS_DIR):
+        return []
+    return [{"key": os.path.splitext(f)[0], "name": os.path.splitext(f)[0]}
+            for f in sorted(os.listdir(ICONS_DIR)) if f.lower().endswith(".png")]
+
+def para_to_html(p, styles, tf_rules=None, note_icon=False):
+    """返回 (段落html, [注释...], block_style_keys)
+    tf_rules: 选中文字字体规则 [{"text":精确文字, "font":字体key}]，命中第一条包裹 span
+    note_icon: True 时注释标记渲染为小图标（images/noteicon.png）"""
     notes = []
     def _note_sub(m):
         notes.append(m.group(1))
@@ -714,12 +730,26 @@ def para_to_html(p, styles):
     block_keys = [s["key"] for s in styles
                   if s.get("enabled") and s.get("scope") == "block" and s["_rx"] and s["_rx"].match(txt.strip())]
     esc = htmlmod.escape(txt, quote=False)
+    # 选中文字自定义字体（先于样式规则包裹，保证精确命中原文）
+    for tf in (tf_rules or []):
+        needle = htmlmod.escape(tf["text"], quote=False)
+        pos = esc.find(needle)
+        if pos >= 0:
+            esc = (esc[:pos] + f'<span class="tf_{tf["font"]}">' + needle
+                   + "</span>" + esc[pos + len(needle):])
     for s in styles:
         if s.get("enabled") and s.get("scope") != "block" and s["_rx"]:
             esc = s["_rx"].sub(lambda m: f'<span class="sty_{s["key"]}">{m.group(0)}</span>', esc)
-    esc = re.sub(r"\x00NOTE(\d+)\x00",
-                 lambda m: f'<a epub:type="noteref" href="#NOTE_HREF_{m.group(1)}" class="note-ref" id="NOTE_REF_{m.group(1)}">[注{int(m.group(1))+1}]</a>',
-                 esc)
+    if note_icon:
+        esc = re.sub(r"\x00NOTE(\d+)\x00",
+                     lambda m: (f'<a epub:type="noteref" href="#NOTE_HREF_{m.group(1)}" class="note-ref" '
+                                f'id="NOTE_REF_{m.group(1)}"><img class="note-ico" src="../images/noteicon.png" '
+                                f'alt="注{int(m.group(1))+1}"/></a>'),
+                     esc)
+    else:
+        esc = re.sub(r"\x00NOTE(\d+)\x00",
+                     lambda m: f'<a epub:type="noteref" href="#NOTE_HREF_{m.group(1)}" class="note-ref" id="NOTE_REF_{m.group(1)}">[注{int(m.group(1))+1}]</a>',
+                     esc)
     return esc, notes, block_keys
 
 def compile_styles(styles):
@@ -805,15 +835,33 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
         images["images/" + cover_fn] = os.path.join(assets_dir, cover_fn)
 
     hcfg = st["header"]
-    headers = []
+    headers = []          # 轮换用图片列表
+    header_fixed = {}     # 章索引(0基) -> 固定头图文件名（assign 指定）
     src_imgs = hcfg.get("images", [])
     if hcfg.get("enabled") and src_imgs:
+        # 先处理全部图（指定章号可能引用任意一张），再取轮换子集
+        img_files = {}
+        for i, h in enumerate(src_imgs):
+            if os.path.isfile(h):
+                fn = make_header(h, os.path.join(assets_dir, f"head{i}"), hcfg, quality, seed=7 + i)
+                img_files[i] = fn
+                images["images/" + fn] = os.path.join(assets_dir, fn)
         use = src_imgs if hcfg.get("rotate", True) else src_imgs[:1]
         for i, h in enumerate(use):
             if os.path.isfile(h):
-                fn = make_header(h, os.path.join(assets_dir, f"head{i}"), hcfg, quality, seed=7 + i)
-                headers.append(fn)
-                images["images/" + fn] = os.path.join(assets_dir, fn)
+                headers.append(img_files[i])
+        for a in hcfg.get("assign", []):
+            try:
+                img_i = int(a.get("img", 0))
+            except (TypeError, ValueError):
+                continue
+            if img_i not in img_files:
+                continue
+            for cs in re.split(r"[,，、;；\s]+", str(a.get("chapters") or "")):
+                if cs.strip().isdigit():
+                    cn = int(cs)
+                    if cn >= 1:
+                        header_fixed[cn - 1] = img_files[img_i]
 
     icfg = st["illust"]
     illusts = []
@@ -832,6 +880,27 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
             fn = make_tocbg(g, out, maxw=toc_bg_maxw, quality=quality)
             toc_bgs.append(fn)
             images["images/" + fn] = os.path.join(assets_dir, fn)
+
+    # 注释标记小图标（替代 [注N] 文字标记）
+    note_icon_on = False
+    if st["notes"].get("icon"):
+        icon_src = os.path.join(ICONS_DIR, st["notes"]["icon"] + ".png")
+        if os.path.isfile(icon_src):
+            with open(icon_src, "rb") as fh:
+                data = fh.read()
+            with open(os.path.join(assets_dir, "noteicon.png"), "wb") as fh:
+                fh.write(data)
+            images["images/noteicon.png"] = os.path.join(assets_dir, "noteicon.png")
+            note_icon_on = True
+
+    # 选中文字自定义字体：按章分组
+    tf_by_ch = {}
+    for tf in st.get("text_fonts", []):
+        if tf.get("text") and tf.get("font"):
+            try:
+                tf_by_ch.setdefault(int(tf.get("chapter") or 0), []).append(tf)
+            except (TypeError, ValueError):
+                pass
 
     def find_para(ci, text, pos="after"):
         """在章 ci 的段落里找第一条包含 text 的段落，返回 (段索引, 段前/段后)。
@@ -889,6 +958,9 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
     for s in styles:
         if s.get("enabled"):
             css.append(f".sty_{s['key']} {{ {style_css(s)} }}")
+    # 选中文字自定义字体
+    for k in sorted({tf["font"] for rules in tf_by_ch.values() for tf in rules if tf.get("font") in fonts}):
+        css.append(f'.tf_{k} {{ font-family: "{k}"; }}')
     bold = "bold" if st.get("title_bold", True) else "normal"
     tfont = 'font-family: "title";' if "title" in fonts else ""
     css.append(f"h1 {{ {tfont} text-align: center; font-weight: {bold}; font-size: {st['title_size']}em; margin: 0.5em 0 1.2em 0; }}")
@@ -898,6 +970,7 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
     ncfg = st["notes"]
     nfont = f'font-family: "{ncfg["font"]}";' if ncfg.get("font") and ncfg["font"] in fonts else ""
     css.append("a.note-ref { font-size: 0.75em; vertical-align: super; text-decoration: none; color: inherit; }")
+    css.append("a.note-ref img.note-ico { height: 1.6em; width: auto; vertical-align: -0.3em; border: 0; }")
     css.append(f"aside.footnote {{ {nfont} color: {ncfg.get('color','#000')}; font-size: {ncfg.get('size',0.85)}em;"
                f"{'font-weight: bold;' if ncfg.get('bold') else ''}{'font-style: italic;' if ncfg.get('italic') else ''}"
                " margin-top: 1.5em; border-top: 1px solid #999; padding-top: 0.5em; }")
@@ -951,15 +1024,17 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
             f'<body><div class="coverpage"><img src="images/{cover_fn}" alt="封面"/></div></body>'))
 
     # ---- 章节 ----
-    style_hits = note_total = 0
+    style_hits = note_total = tf_hits = 0
     ch_files = []   # (index, title, fn, volume)
     for i, ch in enumerate(chapters):
         paras_html, ch_notes = [], []
+        ch_tf = tf_by_ch.get(i, [])
         for j, p in enumerate(ch["paras"]):
             for where, h_html in inline_map.get(i, {}).get(j, []):
                 if where == "before":
                     paras_html.append(h_html)
-            htxt, notes, block_keys = para_to_html(p, styles)
+            htxt, notes, block_keys = para_to_html(p, styles, ch_tf, note_icon_on)
+            tf_hits += htxt.count('class="tf_')
             for k, _ in enumerate(notes):
                 htxt = htxt.replace(f"NOTE_HREF_{k}", f"fn_{i}_{len(ch_notes)+k}").replace(f"NOTE_REF_{k}", f"fnref_{i}_{len(ch_notes)+k}")
             ch_notes.extend(notes)
@@ -987,8 +1062,8 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
             f' <a href="#fnref_{i}_{k}">↩</a></p></aside>'
             for k, n in enumerate(ch_notes))
         head_html = ""
-        if headers:
-            fn_h = headers[i % len(headers)]
+        fn_h = header_fixed.get(i) or (headers[i % len(headers)] if headers else None)
+        if fn_h:
             head_html = f'<div class="chapter-img"><img src="../images/{fn_h}" alt=""/></div>\n'
         fn = f"chapters/ch{i:03d}.xhtml"
         add_page(f"ch{i}", fn, PAGE % (htmlmod.escape(ch["title"]), "../",
@@ -1150,6 +1225,7 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
         for n, d in files.items():
             z.writestr(n, d, compress_type=zipfile.ZIP_DEFLATED)
     size = os.path.getsize(out_path) / 1048576
-    log(f"已生成 {out_path}（{size:.1f} MB），{len(chapters)} 章，样式命中 {style_hits} 处，注释 {note_total} 条")
+    log(f"已生成 {out_path}（{size:.1f} MB），{len(chapters)} 章，样式命中 {style_hits} 处，"
+        f"选字命中 {tf_hits} 处，注释 {note_total} 条")
     return {"path": out_path, "size_mb": round(size, 1), "chapters": len(chapters),
-            "dialogues": style_hits, "notes": note_total}
+            "dialogues": style_hits, "notes": note_total, "tf_hits": tf_hits}

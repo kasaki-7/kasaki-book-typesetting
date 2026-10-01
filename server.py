@@ -344,6 +344,47 @@ def ads_delete():
 def style_presets():
     return jsonify(core.STYLE_PRESETS)
 
+# ---------- 内置注释标记图标 ----------
+@app.route("/api/icons")
+def list_icons():
+    return jsonify(core.list_note_icons())
+
+@app.route("/icons/<path:name>.png")
+def icon_file(name):
+    return send_from_directory(core.ICONS_DIR, name + ".png")
+
+# ---------- 选中文字自定义字体 ----------
+@app.route("/api/text_fonts", methods=["POST"])
+def add_text_font():
+    b, err = book_or_404()
+    if err: return err
+    d = request.json or {}
+    text = (d.get("text") or "").strip()
+    font = (d.get("font") or "").strip()
+    if not text:
+        return jsonify({"error": "选中文字为空"}), 400
+    if font not in b["settings"]["fonts"]:
+        return jsonify({"error": f"字体「{font}」不存在，请先在字体页上传"}), 400
+    try:
+        chapter = int(d.get("chapter") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"error": "章号无效"}), 400
+    b["settings"].setdefault("text_fonts", []).append(
+        {"chapter": chapter, "text": text, "font": font})
+    save_book(b)
+    return jsonify({"ok": True, "index": len(b["settings"]["text_fonts"]) - 1})
+
+@app.route("/api/text_fonts/<int:idx>", methods=["DELETE"])
+def del_text_font(idx):
+    b, err = book_or_404()
+    if err: return err
+    lst = b["settings"].get("text_fonts", [])
+    if not (0 <= idx < len(lst)):
+        return jsonify({"error": "不存在"}), 404
+    lst.pop(idx)
+    save_book(b)
+    return jsonify({"ok": True})
+
 # ---------- 素材上传 ----------
 @app.route("/api/upload", methods=["POST"])
 def upload():
