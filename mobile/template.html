@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#fdfcf9">
+<meta name="format-detection" content="telephone=no">
 <title>EPUB 精排工坊 · 手机版</title>
 <style>
 :root{
@@ -73,7 +74,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .pill.on{background:#f0ece2;border-color:var(--accent2);color:var(--accent);font-weight:600}
 .muted{color:var(--muted);font-size:12px;line-height:1.55}
 
-/* 底部导航 */
 nav{
   position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
   background:rgba(253,252,249,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
@@ -88,7 +88,6 @@ nav button .ni{font-size:19px;line-height:1.15}
 nav button.on{color:var(--accent)}
 nav button:active{background:#f5f2ec;transform:none}
 
-/* 蒙版预览网格 */
 .edge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .edge-opt{border:2px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;
   background:#faf8f4;position:relative;transition:.15s}
@@ -97,37 +96,38 @@ nav button:active{background:#f5f2ec;transform:none}
 .edge-opt.on{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(201,169,97,.18)}
 .edge-opt.on .nm{font-weight:600;color:var(--accent)}
 
-/* 进度 */
+.icon-opt{border:2px solid var(--line);border-radius:10px;padding:9px 4px;background:#faf8f4;cursor:pointer;transition:.15s}
+.icon-opt img{height:34px;display:block;margin:0 auto}
+.icon-opt .nm{font-size:11.5px;text-align:center;margin-top:5px;color:var(--txt)}
+.icon-opt.on{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(201,169,97,.18)}
+.icon-opt.on .nm{font-weight:600;color:var(--accent)}
+
 #progWrap{display:none;margin-top:11px}
 #progWrap.on{display:block}
 .bar{height:5px;background:#eeeae2;border-radius:9px;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0;transition:width .25s}
 #progTxt{font-size:12px;color:var(--muted);margin-top:6px}
 
-/* 日志 */
 #log{display:none;background:#2b2824;color:#d8d3c8;font:11.5px/1.7 ui-monospace,Menlo,monospace;
-  padding:11px;border-radius:10px;max-height:190px;overflow:auto;white-space:pre-wrap;margin-top:11px;
+  padding:11px;border-radius:10px;max-height:210px;overflow:auto;white-space:pre-wrap;margin-top:11px;
   -webkit-overflow-scrolling:touch}
 #log.on{display:block}
+#log a{color:#e8d5a8}
 
-/* 提示条 */
 #toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
   background:rgba(31,28,24,.93);color:#fff;padding:9px 17px;border-radius:20px;font-size:13.5px;
   opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:88vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 
-/* 章节列表 */
 .ch-item{display:flex;gap:9px;align-items:center;padding:9px 2px;border-bottom:1px solid #f3f0ea;font-size:13.5px}
 .ch-item:last-child{border-bottom:0}
 .ch-item .num{color:var(--muted);font-size:11.5px;flex:none;min-width:26px;text-align:right;font-variant-numeric:tabular-nums}
 .ch-item .ttl{flex:1;word-break:break-all;line-height:1.4}
 .ch-list{max-height:320px;overflow:auto;-webkit-overflow-scrolling:touch;margin-top:6px}
 
-/* 空态 */
 .empty{text-align:center;padding:28px 14px;color:var(--muted);font-size:13px}
 .empty .big{font-size:34px;display:block;margin-bottom:9px;opacity:.5}
 
-/* 引导 */
 #welcome{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;
   align-items:center;justify-content:center;padding:30px 22px;text-align:center;
   padding-top:calc(30px + env(safe-area-inset-top))}
@@ -159,10 +159,10 @@ details .dbody{padding:0 13px 13px}
   <h2>EPUB 精排工坊</h2>
   <p>手机版 · 纯本地运行<br>不联网、不上传，书稿只留在你的手机上</p>
   <div class="feats">
-    <div class="feat"><b>双字体排版</b><span>明朝体正文 + 楷体对话</span></div>
-    <div class="feat"><b>边缘头图</b><span>11 种水墨蒙版任选</span></div>
+    <div class="feat"><b>多字体排版</b><span>正文/对话/标题独立字体</span></div>
+    <div class="feat"><b>边缘头图</b><span>11 种水墨蒙版，可指定章号</span></div>
     <div class="feat"><b>字体瘦身</b><span>24MB 字体压到 10KB</span></div>
-    <div class="feat"><b>墨水屏优化</b><span>版式针对 Kindle 调校</span></div>
+    <div class="feat"><b>注释与插图</b><span>注释图标 · 按文字插图</span></div>
   </div>
   <button class="primary wide" style="max-width:330px" onclick="closeWelcome()">开始使用</button>
   <p style="margin-top:14px;font-size:11.5px">首次使用建议在 WiFi 下加载（约 1MB）</p>
@@ -174,7 +174,6 @@ details .dbody{padding:0 13px 13px}
 </header>
 
 <main>
-  <!-- ========= 导入 ========= -->
   <div class="page active" id="p-import">
     <div class="card">
       <h2><span class="ic">📥</span>导入书籍</h2>
@@ -182,6 +181,11 @@ details .dbody{padding:0 13px 13px}
       <button class="primary wide" onclick="fileInput('txt')">选择 TXT 文件</button>
       <div style="height:8px"></div>
       <button class="wide" onclick="fileInput('epub')">选择 EPUB 文件</button>
+    </div>
+    <div class="card">
+      <h2><span class="ic">🧹</span>广告过滤</h2>
+      <p class="hint">每行一条，正文中包含该文字的整行会被删除（导入/重切章时生效）。</p>
+      <div class="field"><textarea id="adsRules" rows="3" placeholder="欢迎访问&#10;请访问&#10;本书首发"></textarea></div>
     </div>
     <div class="card">
       <h2><span class="ic">✂️</span>章节识别</h2>
@@ -201,7 +205,6 @@ details .dbody{padding:0 13px 13px}
     </div>
   </div>
 
-  <!-- ========= 样式 ========= -->
   <div class="page" id="p-style">
     <div class="card">
       <h2><span class="ic">🔤</span>字体</h2>
@@ -220,6 +223,15 @@ details .dbody{padding:0 13px 13px}
       </div>
     </div>
     <div class="card">
+      <h2><span class="ic">📌</span>注释与标记图标</h2>
+      <p class="hint">在「正文编辑」里给文字加 <b>{{注:内容}}</b> 即成注释；选一个图标后，正文中的 [注N] 标记会替换为该图标。</p>
+      <div class="edge-grid" id="iconGrid"></div>
+      <div class="row" style="margin-top:9px">
+        <button class="sm" id="iconResetBtn" onclick="selNoteIcon('')">默认 [注N] 文字</button>
+        <span class="muted" id="iconCur"></span>
+      </div>
+    </div>
+    <div class="card">
       <h2><span class="ic">📐</span>阅读版式</h2>
       <p class="hint">边距用百分比，不会随阅读器字号放大而挤压正文。</p>
       <div class="grid2">
@@ -230,11 +242,17 @@ details .dbody{padding:0 13px 13px}
         <div class="field"><label class="fld">章标题字号 em</label><input type="number" id="lTitle" step="0.05" value="1.25"/></div>
         <div class="field"><label class="fld">图片质量 %</label><input type="number" id="lQuality" step="10" value="85"/></div>
       </div>
+      <label class="chk"><input type="checkbox" id="lDrop"/> 每章第一段首字下沉</label>
+      <div class="grid2">
+        <div class="field"><label class="fld">下沉字号 em</label><input type="number" id="lDropSize" step="0.1" value="2.8"/></div>
+        <div class="field"><label class="fld">下沉字体</label><select id="lDropFont"></select></div>
+        <div class="field"><label class="fld">下沉颜色</label><input type="color" id="lDropColor" style="height:40px;padding:3px"/></div>
+        <div class="field"><label class="chk" style="padding-top:26px"><input type="checkbox" id="lDropBold" checked/> 下沉加粗</label></div>
+      </div>
       <div class="field"><label class="fld">自定义 CSS（可选）</label><textarea id="lCss" rows="3" placeholder="p { letter-spacing: .05em; }"></textarea></div>
     </div>
   </div>
 
-  <!-- ========= 图片 ========= -->
   <div class="page" id="p-image">
     <div class="card">
       <h2><span class="ic">🖼️</span>封面</h2>
@@ -246,7 +264,7 @@ details .dbody{padding:0 13px 13px}
     </div>
     <div class="card">
       <h2><span class="ic">🎴</span>章节头图</h2>
-      <p class="hint">每章顶部的水墨横幅，可多张轮换。边缘样式在下方选择。</p>
+      <p class="hint">每章顶部的水墨横幅，可多张轮换；在图片右侧填章号（支持区间如 1-20,25）可把该图固定给指定章节，其余章照常轮换。</p>
       <div class="row"><button class="sm" onclick="fileInput('header')">添加头图（可多选）</button>
         <button class="sm danger" onclick="clearImg('headers')">清空</button></div>
       <div id="headerBox" style="margin-top:9px"></div>
@@ -259,17 +277,33 @@ details .dbody{padding:0 13px 13px}
       <div class="edge-grid" id="edgeGrid"></div>
     </div>
     <div class="card">
+      <h2><span class="ic">📜</span>目录页背景</h2>
+      <p class="hint">给生成的目录页铺底图（可多张轮换），文字区会垫半透明底保证可读。</p>
+      <div class="row"><button class="sm" onclick="fileInput('tocbg')">添加背景图（可多选）</button>
+        <button class="sm danger" onclick="clearImg('tocs')">清空</button></div>
+      <div id="tocbgBox" style="margin-top:9px"></div>
+      <div class="grid2" style="margin-top:9px">
+        <div class="field"><label class="fld">背景宽度 px（0=不缩放）</label><input type="number" id="tocBgW" value="880"/></div>
+        <div class="field"><label class="fld">背景显示方式</label><select id="tocBgSize">
+          <option value="100% auto">宽度撑满</option>
+          <option value="cover">铺满整页</option>
+          <option value="contain">完整显示</option>
+          <option value="auto 100%">高度撑满</option></select></div>
+      </div>
+    </div>
+    <div class="card">
       <h2><span class="ic">🖼</span>全屏插图页</h2>
-      <p class="hint">整页大图，按间隔或指定章节插入。</p>
+      <p class="hint">整页大图，可每隔几章插一页，也可指定章后插入。</p>
       <div class="row"><button class="sm" onclick="fileInput('illust')">添加插图</button>
         <button class="sm danger" onclick="clearImg('illusts')">清空</button></div>
       <div id="illustBox" style="margin-top:9px"></div>
-      <div class="field" style="margin-top:9px"><label class="fld">每隔几章插入一页（0 = 不插入）</label>
-        <input type="number" id="iEvery" value="0"/></div>
+      <div class="grid2" style="margin-top:9px">
+        <div class="field"><label class="fld">每隔几章插一页（0=不插）</label><input type="number" id="iEvery" value="0"/></div>
+        <div class="field"><label class="fld">指定章后插入（如 3,10 或 2-5）</label><input type="text" id="iAfter" placeholder="如 3,10,2-5"/></div>
+      </div>
     </div>
   </div>
 
-  <!-- ========= 生成 ========= -->
   <div class="page" id="p-build">
     <div class="card">
       <h2><span class="ic">📚</span>书籍信息</h2>
@@ -295,14 +329,28 @@ details .dbody{padding:0 13px 13px}
     </div>
   </div>
 
-  <!-- ========= 正文编辑 ========= -->
   <div class="page" id="p-edit">
     <div class="card">
       <h2><span class="ic">✏️</span>正文编辑</h2>
       <div class="field"><label class="fld">选择章节</label><select id="edSelect" onchange="loadChapterText()"></select></div>
       <div class="field"><label class="fld">章节标题</label><input type="text" id="edTitle"/></div>
-      <textarea id="edText" rows="16"></textarea>
-      <div class="row" style="margin-top:9px">
+      <textarea id="edText" rows="14"></textarea>
+      <p class="muted" id="edSelHint" style="margin-top:7px">在上方文本里拖选文字后，可用下方按钮对选中文字操作</p>
+      <div class="row tight">
+        <select id="edFont" style="flex:1;min-width:100px"></select>
+        <button class="sm primary" onclick="applyTf()">选中文字换字体</button>
+      </div>
+      <div class="row tight" style="margin-top:7px">
+        <button class="sm" onclick="fileInput('inline_before')">插图到选中文字前</button>
+        <button class="sm" onclick="fileInput('inline_after')">插图到选中文字后</button>
+        <button class="sm" onclick="addFullAfter()">本章后加全屏插图</button>
+      </div>
+      <p class="hint" style="margin-top:9px">注释写法：在正文里添加 <b>{{注:注释内容}}</b>，生成后变成可点击的注释标记（图标见「样式」页）。</p>
+      <div class="sec-title">选字字体规则</div>
+      <div id="tfList"></div>
+      <div class="sec-title">正文内插图</div>
+      <div id="inlList"></div>
+      <div class="row" style="margin-top:12px">
         <button class="sm primary" onclick="saveChapterText()">保存本章</button>
         <button class="sm" onclick="backToList()">返回目录</button>
       </div>
@@ -320,1166 +368,12 @@ details .dbody{padding:0 13px 13px}
 <div id="toast"></div>
 <input type="file" id="filePicker" style="display:none">
 
-<script>/*__JSZIP__*/</script>
 <script>
-/* ============================================================
-   EPUB 精排工坊 · 手机版
-   纯前端单文件：文本解析 / 样式引擎 / Canvas 蒙版 / 字体子集化 / EPUB 打包
-   ============================================================ */
-
-const $ = id => document.getElementById(id);
-const DEFAULT_REGEX = String.raw`^\s*(?:\d{1,4}、\s*)?(?:简介|内容简介|序|楔子|尾声|后记|番外[一二三四五六七八九十百千零两\d]*|第?[0-9一二三四五六七八九十百千零两]{1,6}[章节回部])[一-龥· ]{0,12}(?:[(（][0-9一二三四五六七八九十百千零两]{1,5}[)）])?(?:\s+.*)?$`;
-
-// ---------- 样式预设 ----------
-const STYLE_PRESETS = {
-  dlg_cn:  {name:'中文双引号', regex:'“[^”]*”', font:'dlg'},
-  dlg_jp1: {name:'直角引号「」', regex:'「[^」]*」', font:'dlg'},
-  dlg_jp2: {name:'双直角引号『』', regex:'『[^』]*』', font:'dlg'},
-  dlg_sq:  {name:'单引号‘’', regex:'‘[^’]*’', font:'dlg'},
-  paren:   {name:'括号（）', regex:'（[^（）]*）', font:'dlg'},
-  author:  {name:'作者有话说', regex:'^\\s*【?(?:📢)?(?:作者有话要说|作者有话说|作家有话说|作家想说的话|作者想说的话|作者的话)(?::|：)?】?.*$', font:'dlg', block:true},
-};
-
-const EDGE_STYLES = [
-  ['plain','方正'],['cloud','云边'],['mist','雾边'],['brush','拖墨'],['roughoval','糙圆'],['watercolor','晕染'],
-  ['film','胶片'],['tornside','撕边'],['tornframe','撕框'],['brushframe','笔刷'],['deckle','毛边'],
-];
-
-// ---------- 全局状态（持久化到 localStorage） ----------
-const DEFAULT_STATE = {
-  toc_regex: DEFAULT_REGEX,
-  fonts: {body:'', dlg:'', title:'', toc:''},
-  fontNames: {},
-  styles: [{key:'dlg_cn', name:'中文双引号', regex:'“[^”]*”', font:'dlg', color:'#4b7f52',
-            size:1, bold:false, italic:false, enabled:true}],
-  layout: {margin:4, line:1.8, para:0.35, indent:2, title:1.25, quality:85, css:''},
-  cover:null, coverW:1200,
-  headers:[], hW:1080, hH:500, hRotate:true, edge:'cloud',
-  illusts:[], iEvery:0,
-  meta:{title:'', author:'', intro:'', tags:''},
-};
-let S = JSON.parse(JSON.stringify(DEFAULT_STATE));
-let BOOK = null;          // {title, author, chapters:[{title,paras:[]}]}
-let EDGE_CACHE = {};      // 蒙版预览缓存
-
-function save() {
-  try {
-    // 字体在内存里是 Uint8Array，写盘前转 base64，避免被序列化成 {"0":12,...}
-    const o = JSON.parse(JSON.stringify(S));
-    if (o.fonts) Object.keys(o.fonts).forEach(k => {
-      const v = S.fonts[k];
-      if (v == null || v === '') { o.fonts[k] = ''; return; }
-      if (v instanceof Uint8Array || ArrayBuffer.isView(v)) o.fonts[k] = bytesToB64(v);
-      else if (typeof v === 'object' && v.__b64) o.fonts[k] = v.__b64;
-    });
-    localStorage.setItem('epubstudio_mobile', JSON.stringify(o));
-  } catch(e) { console.warn('保存失败', e); }
-}
-function load() {
-  try {
-    const raw = localStorage.getItem('epubstudio_mobile');
-    if (raw) {
-      const o = JSON.parse(raw);
-      S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), o);
-      S.fonts = Object.assign({body:'',dlg:'',title:'',toc:''}, o.fonts||{});
-      S.layout = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE.layout)), o.layout||{});
-      S.meta = Object.assign({title:'',author:'',intro:'',tags:''}, o.meta||{});
-      Object.keys(S.fonts).forEach(k => {
-        const v = S.fonts[k];
-        if (typeof v === 'string' && v) S.fonts[k] = b64ToBytes(v);
-        else if (v && typeof v === 'object') {
-          // 兼容旧版被错误序列化成 {0:..,1:..} 的字体数据
-          try { S.fonts[k] = Uint8Array.from(Object.keys(v).sort((a,b)=>a-b).map(x => v[x]&255)); S.fontNames[k] = (S.fontNames[k]||'') + '(旧)'; }
-          catch(e) { S.fonts[k] = ''; }
-        } else S.fonts[k] = '';
-      });
-      if (!S.book) S.book = null;
-    }
-  } catch(e) { console.warn('读取失败', e); }
-}
-// 字体以 base64 存 localStorage，读出时转回 Uint8Array
-function bytesToB64(u8) {
-  let s = '';
-  const CH = 0x8000;
-  for (let i = 0; i < u8.length; i += CH) s += String.fromCharCode.apply(null, u8.subarray(i, i+CH));
-  return btoa(s);
-}
-function b64ToBytes(b64) {
-  const bin = atob(b64); const u8 = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-  return u8;
-}
-
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('on'), 2100);
-}
-function logLine(s) {
-  const el = $('log'); el.classList.add('on');
-  el.textContent += s + '\n'; el.scrollTop = el.scrollHeight;
-}
-function setProg(p, txt) {
-  $('progWrap').classList.add('on');
-  $('progBar').style.width = Math.round(p*100) + '%';
-  if (txt) $('progTxt').textContent = txt;
-}
-
-// ---------- 导航 ----------
-function go(p) {
-  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-  $('p-' + p).classList.add('active');
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
-  window.scrollTo({top:0, behavior:'instant'});
-  if (p === 'style') { renderFontSlots(); renderStyles(); loadLayoutUI(); }
-  if (p === 'image') { renderImages(); renderEdgeGrid(); }
-  if (p === 'build') loadMetaUI();
-}
-function closeWelcome() { $('welcome').classList.add('hide'); }
-
-// ---------- 文件选择 ----------
-let pickKind = null;
-function fileInput(kind) {
-  pickKind = kind;
-  const el = $('filePicker');
-  if (kind === 'header' || kind === 'illust') el.multiple = true; else el.multiple = false;
-  el.accept = kind === 'txt' ? '.txt,text/plain'
-            : kind === 'epub' ? '.epub,application/epub+zip'
-            : kind === 'settings' ? '.json,application/json'
-            : 'image/*,font/ttf,font/otf,.ttf,.otf';
-  el.value = '';
-  el.click();
-}
-document.addEventListener('DOMContentLoaded', () => {
-  $('filePicker').addEventListener('change', onFilePicked);
-});
-async function onFilePicked(e) {
-  const files = [...e.target.files];
-  if (!files.length) return;
-  const kind = pickKind; pickKind = null;
-  try {
-    if (kind === 'txt') await importTxt(files[0]);
-    else if (kind === 'epub') await importEpub(files[0]);
-    else if (kind === 'cover') await addImage('cover', files[0]);
-    else if (kind === 'header') { for (const f of files) await addImage('header', f); renderImages(); renderEdgeGrid(); }
-    else if (kind === 'illust') { for (const f of files) await addImage('illust', f); renderImages(); }
-    else if (kind === 'font_body') await addFont('body', files[0]);
-    else if (kind === 'font_dlg')  await addFont('dlg', files[0]);
-    else if (kind === 'font_title') await addFont('title', files[0]);
-    else if (kind === 'font_toc')  await addFont('toc', files[0]);
-    else if (kind === 'settings') await importSettingsFile(files[0]);
-  } catch(err) {
-    console.error(err); toast('处理失败：' + (err.message || err));
-  }
-}
-
-// ============================================================
-// 文本解析
-// ============================================================
-function parseTxt(text) {
-  text = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
-  // 去掉常见广告行
-  text = text.split('\n').filter(l => !/^\s*(?:欢迎访问|请访问|本书首发|更多好看的|手机阅读|www\.|https?:\/\/)/i.test(l)).join('\n');
-  const lines = text.split('\n');
-  const chs = [];
-  let cur = null;
-  for (const line of lines) {
-    const t = line.trim();
-    if (t && chapterPattern) chapterPattern.lastIndex = 0;
-    if (t && chapterPattern && chapterPattern.test(t)) {
-      cur = {title: t, paras: []};
-      chs.push(cur);
-    } else {
-      if (!cur) { cur = {title: '正文', paras: []}; chs.push(cur); }
-      if (t) cur.paras.push(t);
-    }
-  }
-  return chs.filter(c => c.paras.length || c.title !== '正文');
-}
-let chapterPattern = null;
-function setRegex(rx) {
-  try { chapterPattern = new RegExp(rx); $('tocRegex').value = rx; return true; }
-  catch(e) { toast('正则无效：' + e.message); return false; }
-}
-function doResplit() {
-  if (!BOOK) return toast('请先导入书籍');
-  if (!setRegex($('tocRegex').value)) return;
-  if (BOOK.srcText == null) return toast('EPUB 导入的书籍无法用正则重切');
-  BOOK.chapters = parseTxt(BOOK.srcText);
-  S.toc_regex = $('tocRegex').value; save();
-  renderChapters();
-  toast(`已重切为 ${BOOK.chapters.length} 章`);
-}
-
-// ============================================================
-// EPUB 解析（读取源 EPUB 的章节）
-// ============================================================
-async function importEpub(file) {
-  setProg(0.1, '读取 EPUB…');
-  const zip = await JSZip.loadAsync(file);
-  // 找 opf
-  let opfPath = null;
-  const container = zip.file('META-INF/container.xml');
-  if (container) {
-    const cx = await container.async('string');
-    const m = /full-path="([^"]+)"/.exec(cx);
-    if (m) opfPath = m[1];
-  }
-  if (!opfPath) {
-    const f = Object.keys(zip.files).find(n => n.endsWith('.opf'));
-    opfPath = f;
-  }
-  if (!opfPath) throw new Error('不是有效的 EPUB（缺少 OPF）');
-  const baseDir = opfPath.includes('/') ? opfPath.replace(/\/[^/]+$/, '/') : '';
-  const opf = await zip.file(opfPath).async('string');
-
-  // manifest: id -> href
-  const manifest = {};
-  const reItem = /<item\s[^>]*>/gi; let mi;
-  while ((mi = reItem.exec(opf))) {
-    const tag = mi[0];
-    const id = /id="([^"]+)"/.exec(tag);
-    const href = /href="([^"]+)"/.exec(tag);
-    const mt = /media-type="([^"]+)"/.exec(tag);
-    if (id && href) manifest[id[1]] = {href: href[1].split('#')[0], mt: mt ? mt[1] : ''};
-  }
-  // spine 顺序
-  const spine = [];
-  const reRef = /<itemref\s[^>]*>/gi; let ri;
-  while ((ri = reRef.exec(opf))) {
-    const id = /idref="([^"]+)"/.exec(ri[0]);
-    if (id && manifest[id[1]]) spine.push(manifest[id[1]].href);
-  }
-  // 标题（toc.ncx 或 nav）
-  const titles = {};
-  const ncxFile = Object.keys(zip.files).find(n => n.endsWith('.ncx'));
-  if (ncxFile) {
-    const ncx = await zip.file(ncxFile).async('string');
-    const reNP = /<navPoint[^>]*>[\s\S]*?<text>([\s\S]*?)<\/text>[\s\S]*?<content[^>]*src="([^"]+)"/gi;
-    let nm;
-    while ((nm = reNP.exec(ncx))) {
-      titles[nm[2].split('#')[0]] = nm[1].replace(/<[^>]+>/g, '').trim();
-    }
-  }
-  setProg(0.4, '解析章节…');
-  const chapters = [];
-  let n = 0;
-  for (const href of spine) {
-    const full = baseDir + href;
-    const f = zip.file(full) || zip.file(decodeURIComponent(full));
-    if (!f) continue;
-    const raw = await f.async('string');
-    const bm = /<body[^>]*>([\s\S]*)<\/body>/i.exec(raw);
-    if (!bm) continue;
-    let body = bm[1];
-    body = body.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '');
-    // 按块级元素切段
-    body = body.replace(/<br\s*\/?>/gi, '\n');
-    body = body.replace(/<\/(p|div|h[1-6]|li|blockquote)>/gi, '\n');
-    body = body.replace(/<[^>]+>/g, '');
-    body = decodeEntities(body);
-    const paras = body.split('\n').map(s => s.replace(/\s+$/,'').trimStart()).filter(s => s.trim());
-    if (!paras.length) continue;
-    const ttl = titles[href] || chapters.length ? (titles[href] || paras[0].slice(0, 30)) : paras[0].slice(0, 30);
-    chapters.push({title: (titles[href] || paras[0]).slice(0, 60), paras: paras});
-    n++;
-    if (n % 15 === 0) setProg(0.4 + 0.5 * n / spine.length, `解析章节 ${n}/${spine.length}…`);
-  }
-  if (!chapters.length) throw new Error('EPUB 中未找到正文');
-  BOOK = {title: file.name.replace(/\.epub$/i, ''), author: '', chapters, srcText: null};
-  setProg(1, '完成');
-  afterImport();
-}
-function decodeEntities(s) {
-  const el = document.createElement('textarea');
-  el.innerHTML = s;
-  return el.value;
-}
-
-async function importTxt(file) {
-  setProg(0.2, '读取文件…');
-  const text = await file.text();
-  BOOK = {title: file.name.replace(/\.txt$/i, ''), author: '', chapters: [], srcText: text};
-  BOOK.chapters = parseTxt(text);
-  setProg(1, '完成');
-  afterImport();
-}
-function afterImport() {
-  S.meta.title = S.meta.title || BOOK.title;
-  save();
-  renderChapters();
-  $('hSub').textContent = `${BOOK.title} · ${BOOK.chapters.length} 章`;
-  $('hTitle').textContent = BOOK.title;
-  $('chCard').style.display = '';
-  S.meta.title = BOOK.title;
-  loadMetaUI();
-  toast(`导入成功：${BOOK.chapters.length} 章`);
-  setTimeout(() => { if (!$('welcome').classList.contains('hide')) closeWelcome(); }, 300);
-}
-function renderChapters() {
-  if (!BOOK) return;
-  $('chCount').textContent = `共 ${BOOK.chapters.length} 章`;
-  $('chList').innerHTML = BOOK.chapters.map((c, i) =>
-    `<div class="ch-item"><span class="num">${i+1}</span><span class="ttl">${esc(c.title)}</span></div>`).join('');
-}
-function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
-
-// ---------- 正文编辑 ----------
-function openEditor() {
-  if (!BOOK) return;
-  go('edit');
-  const sel = $('edSelect');
-  sel.innerHTML = BOOK.chapters.map((c, i) => `<option value="${i}">${i+1}. ${esc(c.title)}</option>`).join('');
-  sel.value = 0; loadChapterText();
-}
-function backToList() { go('import'); }
-function loadChapterText() {
-  const i = +$('edSelect').value;
-  const c = BOOK.chapters[i]; if (!c) return;
-  $('edTitle').value = c.title;
-  $('edText').value = c.paras.join('\n');
-}
-function saveChapterText() {
-  const i = +$('edSelect').value;
-  const c = BOOK.chapters[i]; if (!c) return;
-  c.title = $('edTitle').value.trim() || c.title;
-  c.paras = $('edText').value.split('\n').map(s => s.trim()).filter(Boolean);
-  renderChapters();
-  toast('本章已保存');
-  $('edSelect').options[i].text = `${i+1}. ${c.title}`;
-}
-
-// ============================================================
-// 图片处理（Canvas）
-// ============================================================
-async function addImage(kind, file) {
-  const dataUrl = await fileToDataURL(file);
-  const img = await loadImage(dataUrl);
-  if (kind === 'cover') {
-    S.cover = {dataUrl, name:file.name, w:img.naturalWidth, h:img.naturalHeight};
-  } else if (kind === 'header') {
-    S.headers.push({dataUrl, name:file.name});
-  } else if (kind === 'illust') {
-    S.illusts.push({dataUrl, name:file.name});
-  }
-  save();
-  toast('已添加 ' + file.name);
-}
-function clearImg(kind) {
-  if (kind === 'cover') S.cover = null;
-  else if (kind === 'headers') S.headers = [];
-  else if (kind === 'illusts') S.illusts = [];
-  save(); renderImages(); renderEdgeGrid();
-}
-function fileToDataURL(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result); r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-function loadImage(src) {
-  return new Promise((res, rej) => {
-    const im = new Image();
-    im.onload = () => res(im); im.onerror = () => rej(new Error('图片无法解码'));
-    im.src = src;
-  });
-}
-function renderImages() {
-  $('coverBox').innerHTML = S.cover
-    ? `<span class="pill on">${esc(S.cover.name)}</span>`
-    : '<span class="muted">未设置</span>';
-  $('coverW').value = S.coverW;
-  $('headerBox').innerHTML = S.headers.length
-    ? S.headers.map(h => `<span class="pill">${esc(h.name)}</span>`).join('')
-    : '<span class="muted">未添加</span>';
-  $('hW').value = S.hW; $('hH').value = S.hH; $('hRotate').checked = S.hRotate;
-  $('illustBox').innerHTML = S.illusts.length
-    ? S.illusts.map(h => `<span class="pill">${esc(h.name)}</span>`).join('')
-    : '<span class="muted">未添加</span>';
-  $('iEvery').value = S.iEvery;
-}
-
-// ---------- 边缘蒙版（Canvas 实现） ----------
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function() {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-/** 生成 alpha 蒙版 canvas（白=显示，黑=透明） */
-function makeMask(key, w, h, seed) {
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-  const g = cv.getContext('2d');
-  const rnd = mulberry32(seed || 7);
-  // 蒙版画布初始必须完全透明：白色=保留，透明=裁掉
-  g.clearRect(0, 0, w, h);
-
-  if (key === 'plain' || key === 'film') { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); return cv; }
-
-  g.fillStyle = '#fff';
-  if (key === 'cloud') {
-    // 底部云雾：主体 + 一排交错圆 + 底部渐变淡出（用 destination-out 挖掉 alpha）
-    const zone = Math.max(20, Math.round(h * 0.26));
-    const edge = h - zone;
-    g.fillRect(0, 0, w, edge);
-    const rmax = Math.max(10, Math.round(zone * 0.75));
-    for (let x = -rmax; x < w + rmax; ) {
-      const r = rmax * (0.42 + rnd() * 0.55);
-      const cy = edge + zone * (0.05 + rnd() * 0.4);
-      g.beginPath(); g.arc(x, cy, r, 0, 7); g.fill();
-      x += r * (0.85 + rnd() * 0.6);
-    }
-    // 底部渐变挖空：让下缘平滑过渡到透明
-    const grd = g.createLinearGradient(0, edge, 0, h);
-    grd.addColorStop(0, 'rgba(0,0,0,0)');
-    grd.addColorStop(0.55, 'rgba(0,0,0,0.35)');
-    grd.addColorStop(1, 'rgba(0,0,0,1)');
-    g.globalCompositeOperation = 'destination-out';
-    g.fillStyle = grd; g.fillRect(0, edge, w, zone);
-    g.globalCompositeOperation = 'source-over';
-  } else if (key === 'mist') {
-    // 上下边缘柔化
-    g.fillRect(0, 0, w, h);
-    const b = Math.round(h * 0.13);
-    const g1 = g.createLinearGradient(0, 0, 0, b);
-    g1.addColorStop(0, 'rgba(0,0,0,1)'); g1.addColorStop(1, 'rgba(0,0,0,0)');
-    g.globalCompositeOperation = 'destination-out';
-    g.fillStyle = g1; g.fillRect(0, 0, w, b);
-    const g2 = g.createLinearGradient(0, h, 0, h - b);
-    g2.addColorStop(0, 'rgba(0,0,0,1)'); g2.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = g2; g.fillRect(0, h - b, w, b);
-    g.globalCompositeOperation = 'source-over';
-  } else if (key === 'brush') {
-    // 干笔描边框：四周笔触，中空
-    const inset = Math.round(Math.min(w, h) * 0.06);
-    g.fillRect(inset, inset, w - inset*2, h - inset*2);
-    g.globalCompositeOperation = 'destination-out';
-    const t = Math.max(2, Math.round(Math.min(w, h) * 0.02));
-    // 用旋转椭圆模拟笔触（沿边随机）
-    for (let i = 0; i < 260; i++) {
-      const side = Math.floor(rnd() * 4);
-      const along = rnd();
-      const th = t * (0.3 + rnd() * 1.2);
-      const len = Math.max(w, h) * (0.02 + rnd() * 0.09);
-      g.save();
-      if (side === 0 || side === 2) {
-        const cx = along * w, cy = side === 0 ? inset : h - inset;
-        g.translate(cx, cy); g.rotate((rnd() - 0.5) * 0.5);
-      } else {
-        const cy = along * h, cx = side === 1 ? inset : w - inset;
-        g.translate(cx, cy); g.rotate(Math.PI/2 + (rnd() - 0.5) * 0.5);
-      }
-      g.beginPath();
-      if (rnd() < 0.5) { g.ellipse(0, 0, len/2, th, 0, 0, 7); g.fill(); }
-      else { g.arc(0, 0, th * (0.5 + rnd()), 0, 7); g.fill(); }
-      g.restore();
-    }
-    g.globalCompositeOperation = 'source-over';
-    // 边缘外扩的飞白
-    g.globalCompositeOperation = 'destination-out';
-    for (let i = 0; i < 150; i++) {
-      const side = Math.floor(rnd() * 4);
-      const along = rnd();
-      let cx, cy;
-      if (side === 0) { cx = along * w; cy = inset - rnd() * t * 2.2; }
-      else if (side === 2) { cx = along * w; cy = h - inset + rnd() * t * 2.2; }
-      else if (side === 1) { cx = inset - rnd() * t * 2.2; cy = along * h; }
-      else { cx = w - inset + rnd() * t * 2.2; cy = along * h; }
-      g.beginPath(); g.arc(cx, cy, t * (0.4 + rnd() * 0.9), 0, 7); g.fill();
-    }
-    g.globalCompositeOperation = 'source-over';
-  } else if (key === 'roughoval') {
-    // 糙圆：大椭圆 + 边缘不规则
-    const cx = w/2, cy = h/2, rx = w*0.46, ry = h*0.42;
-    g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, 7); g.fill();
-    g.globalCompositeOperation = 'destination-out';
-    for (let i = 0; i < 130; i++) {
-      const a = rnd() * Math.PI * 2;
-      const px = cx + Math.cos(a) * rx * (0.94 + rnd() * 0.12);
-      const py = cy + Math.sin(a) * ry * (0.94 + rnd() * 0.12);
-      g.beginPath(); g.arc(px, py, Math.min(w,h) * (0.008 + rnd() * 0.028), 0, 7); g.fill();
-    }
-    g.globalCompositeOperation = 'source-over';
-  } else if (key === 'watercolor') {
-    // 晕染：多层柔和椭圆
-    for (let i = 0; i < 7; i++) {
-      const cx = w/2 + (rnd()-0.5) * w * 0.2;
-      const cy = h/2 + (rnd()-0.5) * h * 0.24;
-      const rx = w * (0.3 + rnd()*0.16), ry = h * (0.28 + rnd()*0.16);
-      g.beginPath(); g.ellipse(cx, cy, rx, ry, (rnd()-0.5)*0.5, 0, 7); g.fill();
-    }
-    blurCanvas(cv, Math.round(Math.min(w,h) * 0.035));
-  } else if (key === 'tornside') {
-    // 撕边：左右撕毛，上下平直
-    const inx = Math.round(w * 0.055), depth = Math.round(w * 0.05);
-    g.fillRect(inx, 0, w - inx*2, h);
-    // 左右锯齿
-    for (const side of ['l','r']) {
-      g.beginPath();
-      const base = side === 'l' ? inx : w - inx;
-      g.moveTo(base, 0);
-      const n = 46;
-      for (let k = 0; k <= n; k++) {
-        const y = h * k / n;
-        const d = side === 'l' ? base - rnd()*depth : base + rnd()*depth;
-        g.lineTo(d, y);
-      }
-      g.lineTo(side === 'l' ? 0 : w, h); g.lineTo(side === 'l' ? 0 : w, 0);
-      g.closePath(); g.fill();
-    }
-    g.globalCompositeOperation = 'destination-out';
-    for (let i = 0; i < 18; i++) {
-      const side = rnd() < 0.5 ? 'l' : 'r';
-      const y = rnd() * h, hh = 3 + rnd() * 11;
-      const base = side === 'l' ? inx : w - inx;
-      const d = side === 'l' ? base - rnd()*depth*0.5 : base + rnd()*depth*0.5;
-      g.beginPath();
-      g.moveTo(d, y - hh); g.lineTo(d + (side==='l'? depth : -depth), y); g.lineTo(d, y + hh);
-      g.closePath(); g.fill();
-    }
-    // 纸纤维
-    g.globalCompositeOperation = 'source-over';
-    for (let i = 0; i < 100; i++) {
-      const side = rnd() < 0.5 ? 'l' : 'r';
-      const y = rnd() * h, ln = 4 + rnd() * 14;
-      const base = side === 'l' ? inx : w - inx;
-      const d = base + (rnd()-0.5) * depth;
-      g.strokeStyle = '#fff'; g.lineWidth = 1 + rnd();
-      g.beginPath(); g.moveTo(d, y);
-      g.lineTo(d + (side === 'l' ? -ln : ln), y + (rnd()-0.5)*6); g.stroke();
-    }
-    blurCanvas(cv, 1.2);
-  } else if (key === 'tornframe') {
-    // 撕框：四边撕纸白框
-    const inx = Math.round(Math.min(w,h) * 0.05);
-    g.fillRect(inx, inx, w - inx*2, h - inx*2);
-    const dmax = Math.round(Math.min(w,h) * 0.055);
-    for (let i = 0; i < 150; i++) {
-      const side = Math.floor(rnd()*4), t = 0.03 + rnd()*0.94;
-      const depth = dmax * (0.3 + rnd()*0.7);
-      const half = Math.max(3, dmax * (0.4 + rnd()*0.7));
-      let x, y;
-      if (side === 0) { x = t*w; y = inx; }
-      else if (side === 1) { x = w - inx; y = t*h; }
-      else if (side === 2) { x = t*w; y = h - inx; }
-      else { x = inx; y = t*h; }
-      g.save(); g.translate(x, y);
-      g.rotate(side % 2 ? Math.PI/2 : 0);
-      g.fillStyle = rnd() < 0.5 ? '#fff' : '#000';
-      g.beginPath();
-      g.moveTo(0, -half); g.lineTo(depth * (rnd()<0.5?1:-1), 0); g.lineTo(0, half);
-      g.closePath(); g.fill(); g.restore();
-    }
-    blurCanvas(cv, 1.5);
-  } else if (key === 'brushframe') {
-    // 笔刷框：粗笔触描边
-    const inx = Math.round(Math.min(w,h) * 0.055);
-    g.fillRect(inx, inx, w - inx*2, h - inx*2);
-    g.globalCompositeOperation = 'destination-out';
-    const t = Math.max(3, Math.round(Math.min(w,h) * 0.025));
-    for (let i = 0; i < 320; i++) {
-      const side = Math.floor(rnd()*4), along = rnd();
-      const th = t * (0.4 + rnd()*1.4);
-      const len = Math.max(w,h) * (0.03 + rnd()*0.1);
-      g.save();
-      if (side === 0) { g.translate(along*w, inx); g.rotate((rnd()-0.5)*0.4); }
-      else if (side === 2) { g.translate(along*w, h-inx); g.rotate((rnd()-0.5)*0.4); }
-      else if (side === 1) { g.translate(along*h, inx); g.rotate(Math.PI/2 + (rnd()-0.5)*0.4); }
-      else { g.translate(along*h, h-inx); g.rotate(Math.PI/2 + (rnd()-0.5)*0.4); }
-      if (side >= 2) { /* keep */ }
-      g.restore();
-      // 简化：直接用旋转椭圆
-      g.save();
-      if (side === 0 || side === 2) {
-        const cx = along*w, cy = side === 0 ? inx : h-inx;
-        g.translate(cx, cy); g.rotate((rnd()-0.5)*0.4);
-      } else {
-        const cy = along*h, cx = side === 1 ? inx : w-inx;
-        g.translate(cx, cy); g.rotate(Math.PI/2 + (rnd()-0.5)*0.4);
-      }
-      g.beginPath(); g.ellipse(0, 0, len/2, th, 0, 0, 7); g.fill();
-      g.restore();
-    }
-    // 外飞白
-    for (let i = 0; i < 130; i++) {
-      const side = Math.floor(rnd()*4), along = rnd();
-      let cx, cy;
-      if (side === 0) { cx = along*w; cy = inx - rnd()*t*2; }
-      else if (side === 2) { cx = along*w; cy = h-inx + rnd()*t*2; }
-      else if (side === 1) { cx = inx - rnd()*t*2; cy = along*h; }
-      else { cx = w-inx + rnd()*t*2; cy = along*h; }
-      g.beginPath(); g.arc(cx, cy, t*(0.4 + rnd()), 0, 7); g.fill();
-    }
-    g.globalCompositeOperation = 'source-over';
-  } else if (key === 'deckle') {
-    // 毛边：底边细密纸纤维
-    g.fillRect(0, 0, w, h);
-    g.globalCompositeOperation = 'destination-out';
-    const zone = Math.max(8, Math.round(h * 0.055));
-    for (let x = 0; x < w; x += 2) {
-      const d = zone * (0.25 + rnd()*0.9);
-      g.fillRect(x, h - d, 2.4, d);
-    }
-    g.globalCompositeOperation = 'source-over';
-  } else {
-    g.fillRect(0, 0, w, h);
-  }
-  return cv;
-}
-function blurCanvas(cv, r) {
-  if (r < 0.5) return;
-  const g = cv.getContext('2d');
-  const tmp = document.createElement('canvas');
-  tmp.width = cv.width; tmp.height = cv.height;
-  tmp.getContext('2d').drawImage(cv, 0, 0);
-  g.clearRect(0, 0, cv.width, cv.height);
-  g.filter = `blur(${r}px)`;
-  g.drawImage(tmp, 0, 0);
-  g.filter = 'none';
-}
-function renderEdgeGrid() {
-  const grid = $('edgeGrid'); if (!grid) return;
-  if (grid.dataset.built === '1') {
-    grid.querySelectorAll('.edge-opt').forEach(el =>
-      el.classList.toggle('on', el.dataset.k === S.edge));
-    return;
-  }
-  grid.innerHTML = EDGE_STYLES.map(([k, n]) =>
-    `<div class="edge-opt" data-k="${k}" onclick="selEdge('${k}')"><canvas width="180" height="90" data-k="${k}"></canvas><div class="nm">${n}</div></div>`).join('');
-  grid.dataset.built = '1';
-  // 逐个异步绘制预览
-  const demo = 'linear-gradient(135deg,#c9a961,#8c6d3f)';
-  grid.querySelectorAll('canvas').forEach(cv => {
-    const k = cv.dataset.k;
-    requestAnimationFrame(() => {
-      const w = 180, h = 90;
-      const g = cv.getContext('2d');
-      // 底：渐变示意的"图片"
-      g.fillStyle = '#e8e2d5'; g.fillRect(0,0,w,h);
-      const grd = g.createLinearGradient(0,0,w,h);
-      grd.addColorStop(0,'#d9c9a3'); grd.addColorStop(1,'#a8865a');
-      g.fillStyle = grd; g.fillRect(0,0,w,h);
-      const mask = makeMask(k, w, h, 11);
-      g.globalCompositeOperation = 'destination-in';
-      g.drawImage(mask, 0, 0);
-      g.globalCompositeOperation = 'source-over';
-    });
-  });
-  grid.querySelectorAll('.edge-opt').forEach(el => el.classList.toggle('on', el.dataset.k === S.edge));
-}
-function selEdge(k) {
-  S.edge = k; save();
-  document.querySelectorAll('#edgeGrid .edge-opt').forEach(el =>
-    el.classList.toggle('on', el.dataset.k === k));
-  toast('边缘样式：' + (EDGE_STYLES.find(x => x[0] === k) || [,k])[1]);
-}
-
-/** 头图：裁剪到目标比例 + 应用蒙版 → PNG 二进制 */
-async function buildHeader(spec, idx) {
-  const im = await loadImage(spec.dataUrl);
-  const W = Math.max(200, +S.hW || 1080), H = Math.max(100, +S.hH || 500);
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const g = cv.getContext('2d');
-  // cover 裁剪
-  const scale = Math.max(W / im.naturalWidth, H / im.naturalHeight);
-  const dw = im.naturalWidth * scale, dh = im.naturalHeight * scale;
-  g.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
-  if (S.edge !== 'plain' && S.edge !== 'film') {
-    const mask = makeMask(S.edge, W, H, 7 + idx);
-    g.globalCompositeOperation = 'destination-in';
-    g.drawImage(mask, 0, 0);
-    g.globalCompositeOperation = 'source-over';
-  }
-  const blob = await canvasToBlob(cv, 'image/png');
-  return new Uint8Array(await blob.arrayBuffer());
-}
-function canvasToBlob(cv, type, q) {
-  return new Promise(res => cv.toBlob(b => res(b), type, q));
-}
-/** 普通图片压缩 */
-async function buildImage(spec, maxw, quality) {
-  const im = await loadImage(spec.dataUrl);
-  let w = im.naturalWidth, h = im.naturalHeight;
-  if (maxw > 0 && w > maxw) { h = Math.round(h * maxw / w); w = maxw; }
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-  cv.getContext('2d').drawImage(im, 0, 0, w, h);
-  const q = Math.min(0.95, Math.max(0.1, (quality || 85) / 100));
-  const blob = await canvasToBlob(cv, 'image/jpeg', q);
-  return new Uint8Array(await blob.arrayBuffer());
-}
-
-// ============================================================
-// 字体子集化（harfbuzz wasm）
-// ============================================================
-let HB = null;
-async function initHB() {
-  if (HB) return HB;
-  const b64 = document.getElementById('hbWasm').textContent.trim();
-  const bytes = b64ToBytes(b64);
-  const { instance } = await WebAssembly.instantiate(bytes, {});
-  HB = instance.exports;
-  return HB;
-}
-async function addFont(slot, file) {
-  const buf = new Uint8Array(await file.arrayBuffer());
-  S.fonts[slot] = buf;
-  S.fontNames[slot] = file.name;
-  try { save(); } catch(e) { toast('字体较大，保存到本地可能失败'); }
-  renderFontSlots();
-  toast(`已设置${({body:'正文字体',dlg:'对话字体',title:'章标题字体',toc:'目录字体'})[slot]}：${file.name}`);
-}
-function clearFont(slot) {
-  S.fonts[slot] = ''; S.fontNames[slot] = ''; save(); renderFontSlots();
-}
-/** 用 harfbuzz 裁剪字体到指定字符集 */
-async function subsetFont(fontBytes, text) {
-  const hb = await initHB();
-  const chars = Array.from(new Set([...text]));
-  const codepoints = new Set();
-  for (const ch of chars) {
-    const cp = ch.codePointAt(0);
-    if (cp > 0xFFFF) { // 代理对
-      codepoints.add(cp);
-    } else codepoints.add(cp);
-  }
-  // 加入常用 ASCII 与标点
-  for (const c of "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz，。、：；！？（）《》“”‘’—…·【】「」『』～") codepoints.add(c.codePointAt(0));
-
-  const heapu8 = new Uint8Array(hb.memory.buffer);
-  const ptr = hb.malloc(fontBytes.byteLength);
-  heapu8.set(fontBytes, ptr);
-  const blob = hb.hb_blob_create(ptr, fontBytes.byteLength, 2, 0, 0);
-  const face = hb.hb_face_create(blob, 0);
-  hb.hb_blob_destroy(blob);
-  const input = hb.hb_subset_input_create_or_fail();
-  const uset = hb.hb_subset_input_unicode_set(input);
-  for (const cp of codepoints) hb.hb_set_add(uset, cp);
-  const sub = hb.hb_subset_or_fail(face, input);
-  hb.hb_subset_input_destroy(input);
-  const rblob = hb.hb_face_reference_blob(sub);
-  const off = hb.hb_blob_get_data(rblob, 0);
-  const len = hb.hb_blob_get_length(rblob);
-  if (!len) throw new Error('字体子集化失败（字体可能损坏）');
-  const out = new Uint8Array(heapu8.subarray(off, off + len));
-  hb.hb_blob_destroy(rblob); hb.hb_face_destroy(sub); hb.hb_face_destroy(face); hb.free(ptr);
-  return out;
-}
-
-// ---------- 字体 UI ----------
-const FONT_SLOTS = [['body','正文字体','明朝/宋体类，用于正文'],['dlg','对话字体','楷体类，用于引号内文字'],
-  ['title','章标题字体','可选，如京華老宋体'],['toc','目录字体','可选，如瘦金体']];
-function renderFontSlots() {
-  $('fontSlots').innerHTML = FONT_SLOTS.map(([k, n, d]) =>
-    `<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid #f3f0ea">
-      <div><div style="font-size:13.5px">${n}</div><div class="muted">${d}</div></div>
-      <div class="row tight">
-        <span class="pill ${S.fonts[k]?'on':''}">${esc(S.fontNames[k] || '未设置')}</span>
-        <button class="sm" onclick="fileInput('font_${k}')">上传</button>
-        ${S.fonts[k] ? `<button class="sm danger" onclick="clearFont('${k}')">清</button>` : ''}
-      </div></div>`).join('');
-}
-
-// ---------- 样式规则 ----------
-function styleRow(s, i) {
-  return `<details><summary>${esc(s.name || '规则')} ${s.enabled ? '' : '<span class="muted">(停用)</span>'}</summary>
-    <div class="dbody">
-      <label class="chk"><input type="checkbox" ${s.enabled?'checked':''} onchange="updStyle(${i},'enabled',this.checked)"/> 启用</label>
-      <div class="field"><label class="fld">正则</label><input type="text" value="${esc(s.regex).replace(/"/g,'&quot;')}" onchange="updStyle(${i},'regex',this.value)"/></div>
-      <div class="grid3">
-        <div class="field"><label class="fld">字体</label><select onchange="updStyle(${i},'font',this.value)">
-          <option value="">跟随正文</option>
-          ${FONT_SLOTS.map(([k,n]) => `<option value="${k}" ${s.font===k?'selected':''}>${n}</option>`).join('')}
-        </select></div>
-        <div class="field"><label class="fld">颜色</label><input type="color" value="${s.color||'#000000'}" onchange="updStyle(${i},'color',this.value)" style="padding:3px;height:38px"/></div>
-        <div class="field"><label class="fld">字号 em</label><input type="number" step="0.05" value="${s.size||1}" onchange="updStyle(${i},'size',+this.value)"/></div>
-      </div>
-      <div class="row tight">
-        <label class="chk"><input type="checkbox" ${s.bold?'checked':''} onchange="updStyle(${i},'bold',this.checked)"/> 粗</label>
-        <label class="chk"><input type="checkbox" ${s.italic?'checked':''} onchange="updStyle(${i},'italic',this.checked)"/> 斜</label>
-        <button class="sm danger" onclick="delStyle(${i})">删除规则</button>
-      </div>
-    </div></details>`;
-}
-function renderStyles() {
-  $('styleList').innerHTML = S.styles.length
-    ? S.styles.map(styleRow).join('')
-    : '<p class="muted">暂无规则，点下方按钮添加</p>';
-}
-function updStyle(i, k, v) { S.styles[i][k] = v; save(); }
-function delStyle(i) { S.styles.splice(i,1); save(); renderStyles(); }
-function addStylePreset(key) {
-  const p = STYLE_PRESETS[key];
-  S.styles.push({key, name:p.name, regex:p.regex, font:p.font, color:'#000000',
-    size:1, bold:false, italic:false, enabled:true, block:!!p.block});
-  save(); renderStyles();
-  toast('已添加：' + p.name);
-}
-function loadLayoutUI() {
-  const l = S.layout;
-  $('lMargin').value = l.margin; $('lLine').value = l.line; $('lPara').value = l.para;
-  $('lIndent').value = l.indent; $('lTitle').value = l.title; $('lQuality').value = l.quality;
-  $('lCss').value = l.css || '';
-}
-function saveLayoutUI() {
-  const l = S.layout;
-  l.margin = +$('lMargin').value || 0; l.line = +$('lLine').value || 1.8;
-  l.para = +$('lPara').value || 0; l.indent = +$('lIndent').value || 0;
-  l.title = +$('lTitle').value || 1.25; l.quality = +$('lQuality').value || 85;
-  l.css = $('lCss').value;
-  S.coverW = +$('coverW').value || 0;
-  S.hW = +$('hW').value || 1080; S.hH = +$('hH').value || 500;
-  S.hRotate = $('hRotate').checked;
-  S.iEvery = +$('iEvery').value || 0;
-  save();
-}
-function loadMetaUI() {
-  $('mTitle').value = S.meta.title || (BOOK ? BOOK.title : '');
-  $('mAuthor').value = S.meta.author || '';
-  $('mIntro').value = S.meta.intro || '';
-  $('mTags').value = S.meta.tags || '';
-  updateStoreInfo();
-}
-function saveMetaUI() {
-  S.meta.title = $('mTitle').value.trim();
-  S.meta.author = $('mAuthor').value.trim();
-  S.meta.intro = $('mIntro').value.trim();
-  S.meta.tags = $('mTags').value.trim();
-  save();
-}
-function updateStoreInfo() {
-  let n = 0;
-  for (const k in S.fonts) if (S.fonts[k] && S.fonts[k].byteLength) n += S.fonts[k].byteLength;
-  $('storeInfo').textContent = `已保存本机：字体 ${(n/1048576).toFixed(1)} MB · ${S.styles.length} 条样式规则`;
-}
-
-// ============================================================
-// 样式引擎：段落 → HTML
-// ============================================================
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-let styleHits = 0;
-function paraToHtml(p, styles) {
-  let out = escapeHtml(p);
-  const applied = [];
-  styles.forEach((s, si) => {
-    if (!s.enabled) return;
-    let re;
-    try { re = new RegExp(s.regex, 'g'); } catch(e) { return; }
-    if (s.block) {
-      // 整段规则：整段包裹（用占位符标记）
-      const probe = new RegExp(s.regex);
-      if (probe.test(p)) applied.push('sty_' + s.key + '_' + si);
-    } else {
-      let matched = false;
-      out = out.replace(re, m => { matched = true; styleHits++;
-        return `\u0001${si}\u0002${m}\u0003`; });
-      if (matched) applied.push('sty_' + s.key + '_' + si);
-    }
-  });
-  // 替换占位符为 span
-  out = out.replace(/\u0001(\d+)\u0002([\s\S]*?)\u0003/g, (m, si, txt) =>
-    `<span class="sty_${styles[+si].key}_${si}">${txt}</span>`);
-  return {html: out, classes: applied, blockKeys: applied};
-}
-
-// ============================================================
-// EPUB 生成
-// ============================================================
-async function buildEpub() {
-  if (!BOOK || !BOOK.chapters.length) return toast('请先导入书籍');
-  saveLayoutUI(); saveMetaUI();
-  $('buildBtn').disabled = true;
-  $('log').textContent = ''; $('log').classList.add('on');
-  styleHits = 0;
-  try {
-    setProg(0.02, '准备…');
-    const zip = new JSZip();
-    zip.file('mimetype', 'application/epub+zip', {compression:'STORE'});
-    zip.folder('META-INF').file('container.xml',
-`<?xml version="1.0" encoding="utf-8"?>
-<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-<rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles>
-</container>`);
-
-    const title = S.meta.title || BOOK.title;
-    const author = S.meta.author || '';
-    const chapters = BOOK.chapters;
-
-    // ---- 图片 ----
-    setProg(0.06, '处理图片…');
-    const imgFiles = {};   // epub路径 -> Uint8Array
-    let coverName = null;
-    if (S.cover) {
-      const bytes = await buildImage(S.cover, +S.coverW || 0, S.layout.quality);
-      coverName = 'cover.jpg'; imgFiles['images/' + coverName] = bytes;
-      logLine('封面：' + (bytes.length/1024).toFixed(0) + ' KB');
-    }
-    const headerNames = [];
-    const hlist = S.hRotate ? S.headers : S.headers.slice(0, 1);
-    for (let i = 0; i < hlist.length; i++) {
-      const bytes = await buildHeader(hlist[i], i);
-      const nm = 'head' + i + '.png';
-      imgFiles['images/' + nm] = bytes; headerNames.push(nm);
-      logLine(`头图${i+1}：${(bytes.length/1024).toFixed(0)} KB`);
-      setProg(0.06 + 0.16 * (i+1) / Math.max(1, hlist.length), '处理头图…');
-    }
-    const illustNames = [];
-    for (let i = 0; i < S.illusts.length; i++) {
-      const bytes = await buildImage(S.illusts[i], 1024, S.layout.quality);
-      const nm = 'ill' + i + '.jpg';
-      imgFiles['images/' + nm] = bytes; illustNames.push(nm);
-    }
-
-    // ---- 字体子集化 ----
-    const allText = title + author + (S.meta.intro || '') +
-      chapters.map(c => c.title + c.paras.join('')).join('');
-    for (const slot of ['body','dlg','title','toc']) {
-      const fb = S.fonts[slot];
-      if (!fb || !fb.byteLength) continue;
-      setProg(0.24, `裁剪${({body:'正文',dlg:'对话',title:'标题',toc:'目录'})[slot]}字体…`);
-      try {
-        const sub = await subsetFont(fb, allText);
-        imgFiles['fonts/f_' + slot + '.ttf'] = sub;
-        logLine(`${slot} 字体：${(fb.byteLength/1048576).toFixed(1)} MB → ${(sub.byteLength/1024).toFixed(0)} KB`);
-      } catch(e) {
-        logLine(`⚠ ${slot} 字体子集化失败，改用原字体：${e.message}`);
-        imgFiles['fonts/f_' + slot + '.ttf'] = fb;
-      }
-    }
-
-    // ---- CSS ----
-    const L = S.layout;
-    const fontKeys = ['body','dlg','title','toc'].filter(k => imgFiles['fonts/f_' + k + '.ttf']);
-    const bodyFont = fontKeys.includes('body') ? 'body' : (fontKeys[0] || '');
-    const css = [];
-    fontKeys.forEach(k => css.push(`@font-face { font-family: "${k}"; src: url("fonts/f_${k}.ttf"); }`));
-    css.push(bodyFont ? `body { font-family: "${bodyFont}", serif; margin: 0; padding: 0; color: #000; }`
-                      : `body { font-family: serif; margin: 0; padding: 0; color: #000; }`);
-    if (+L.margin > 0) css.push(`.content { margin: ${L.margin}% ${L.margin}%; }`);
-    else css.push('.content { margin: 0; }');
-    const ind = +L.indent > 0 ? `text-indent: ${L.indent}em;` : '';
-    css.push(`p { ${ind} line-height: ${L.line}; margin: ${L.para}em 0; text-align: justify; }`);
-    css.push('p.noind { text-indent: 0; }');
-    S.styles.forEach((s, si) => {
-      if (!s.enabled) return;
-      const parts = [];
-      const f = s.font && fontKeys.includes(s.font) ? s.font : (s.font === 'body' && fontKeys.includes('body') ? 'body' : '');
-      if (f) parts.push(`font-family: "${f}"`);
-      if (s.color && s.color !== '#000000') parts.push(`color: ${s.color}`);
-      if (s.size && +s.size !== 1) parts.push(`font-size: ${s.size}em`);
-      if (s.bold) parts.push('font-weight: bold');
-      if (s.italic) parts.push('font-style: italic');
-      if (parts.length) css.push(`.sty_${s.key}_${si} { ${parts.join('; ')}; }`);
-    });
-    const tFont = fontKeys.includes('title') ? 'font-family: "title";' : '';
-    css.push(`h1 { ${tFont} text-align: center; font-weight: bold; font-size: ${L.title}em; margin: 0.5em 0 1.2em 0; }`);
-    css.push('.chapter-img { margin: 0 0 8px 0; text-align: center; }');
-    css.push('.chapter-img img { width: 100%; display: block; }');
-    css.push('.coverpage, .fullpage { margin: 0; padding: 0; text-align: center; }');
-    css.push('.coverpage img, .fullpage img { width: 100%; display: block; }');
-    if (L.css) css.push(L.css);
-    zip.file('styles.css', css.join('\n'));
-
-    // ---- 章节页面 ----
-    setProg(0.35, '生成章节…');
-    const PAGE = (t, cssPath, body) =>
-`<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
-<head><meta charset="utf-8"/><title>${escapeHtml(t)}</title>
-<link rel="stylesheet" type="text/css" href="${cssPath}styles.css"/></head>
-${body}
-</html>`;
-    const manifest = [], spine = [], navItems = [];
-    if (coverName) {
-      zip.file('cover.xhtml', PAGE('封面', '', `<body><div class="coverpage"><img src="images/${coverName}" alt="封面"/></div></body>`));
-      manifest.push(`<item id="coverpage" href="cover.xhtml" media-type="application/xhtml+xml"/>`);
-      spine.push('coverpage');
-      navItems.push(['封面','cover.xhtml']);
-    }
-    chapters.forEach((c, i) => {
-      const fn = `chapters/ch${String(i).padStart(3,'0')}.xhtml`;
-      const head = headerNames.length
-        ? `<div class="chapter-img"><img src="../images/${headerNames[i % headerNames.length]}" alt=""/></div>\n` : '';
-      const paras = c.paras.map(p => {
-        const r = paraToHtml(p, S.styles);
-        const cls = [];
-        if (/^[\s\u3000]/.test(p)) cls.push('noind');
-        cls.push(...r.blockKeys);
-        const cAttr = cls.length ? ` class="${cls.join(' ')}"` : '';
-        return `<p${cAttr}>${r.html}</p>`;
-      }).join('\n');
-      zip.file(fn, PAGE(c.title, '../',
-        `<body>\n${head}<div class="content">\n<h1>${escapeHtml(c.title)}</h1>\n${paras}\n</div>\n</body>`));
-      manifest.push(`<item id="ch${i}" href="${fn}" media-type="application/xhtml+xml"/>`);
-      spine.push('ch' + i);
-      navItems.push([c.title, fn]);
-      // 插图页
-      if (illustNames.length && +S.iEvery > 0 && (i+1) % +S.iEvery === 0 && i+1 < chapters.length) {
-        const g = illustNames[Math.floor(i / +S.iEvery) % illustNames.length];
-        const ifn = `illust_${i}.xhtml`;
-        zip.file(ifn, PAGE('插图', '', `<body><div class="fullpage"><img src="images/${g}" alt="插图"/></div></body>`));
-        manifest.push(`<item id="ill${i}" href="${ifn}" media-type="application/xhtml+xml"/>`);
-        spine.push('ill' + i);
-      }
-      if (i % 40 === 0) setProg(0.35 + 0.35 * i / chapters.length, `生成章节 ${i+1}/${chapters.length}…`);
-    });
-
-    // ---- 目录页 ----
-    setProg(0.72, '生成目录…');
-    const cnt = chapters.length;
-    const perPage = 24;
-    const pages = Math.ceil(cnt / perPage) || 1;
-    const tocFont = fontKeys.includes('toc') ? 'font-family: "toc";' : '';
-    for (let pi = 0; pi < pages; pi++) {
-      const items = chapters.slice(pi*perPage, (pi+1)*perPage).map(c =>
-        `<div class="titem"><a href="chapters/ch${String(chapters.indexOf(c)).padStart(3,'0')}.xhtml">${escapeHtml(c.title)}</a></div>`).join('\n');
-      zip.file(`tocpage${pi}.xhtml`, PAGE('目录', '',
-        `<body class="tocpage"><div class="toc-inner"><div class="toc-head">目 录</div>\n${items}\n</div></body>`));
-      manifest.push(`<item id="tocpage${pi}" href="tocpage${pi}.xhtml" media-type="application/xhtml+xml"/>`);
-    }
-    // 目录页排在封面后、正文前
-    const tocIds = []; for (let pi = 0; pi < pages; pi++) tocIds.push('tocpage' + pi);
-
-    // ---- NAV / NCX ----
-    const navHtml = navItems.map(([t, fn]) => `<li><a href="${fn}">${escapeHtml(t)}</a></li>`).join('\n');
-    zip.file('nav.xhtml', PAGE('目录', '',
-      `<body><nav epub:type="toc"><h1>目录</h1><ol>${navHtml}</ol></nav></body>`));
-    manifest.push(`<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>`);
-
-    // 最终 spine 顺序：封面 → 目录页 → 正文/插图 → nav
-    const coverIdx = spine.includes('coverpage') ? ['coverpage'] : [];
-    const restIds = spine.filter(x => x !== 'coverpage' && !x.startsWith('tocpage'));
-    const finalSpine = [...coverIdx, ...tocIds, ...restIds, 'nav'];
-
-    let ncx = ''; let ord = 0;
-    navItems.forEach(([t, fn]) => { ord++;
-      ncx += `<navPoint id="np${ord}" playOrder="${ord}"><navLabel><text>${escapeHtml(t)}</text></navLabel><content src="${fn}"/></navPoint>`; });
-    zip.file('toc.ncx',
-`<?xml version="1.0" encoding="utf-8"?>
-<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
-<head><meta name="dtb:uid" content="urn:epubstudio:${escapeHtml(title)}"/></head>
-<docTitle><text>${escapeHtml(title)}</text></docTitle>
-<navMap>${ncx}</navMap>
-</ncx>`);
-    manifest.push(`<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`);
-
-    // ---- 图片/字体 manifest ----
-    manifest.push(`<item id="css" href="styles.css" media-type="text/css"/>`);
-    for (const slot of fontKeys) manifest.push(`<item id="font_${slot}" href="fonts/f_${slot}.ttf" media-type="font/ttf"/>`);
-    Object.keys(imgFiles).forEach(p => {
-      if (p.startsWith('fonts/')) return;   // 字体已按 font/* 单独登记，此处跳过
-      const ext = p.split('.').pop().toLowerCase();
-      const mt = ext === 'png' ? 'image/png' : 'image/jpeg';
-      const id = 'img_' + p.replace(/[\/\.]/g, '_');
-      if (p === 'images/' + coverName) manifest.push(`<item id="cover-image" href="${p}" media-type="${mt}" properties="cover-image"/>`);
-      else manifest.push(`<item id="${id}" href="${p}" media-type="${mt}"/>`);
-    });
-
-    // ---- OPF ----
-    const tags = (S.meta.tags || '').split(/[,，、;；\s]+/).filter(Boolean);
-    const tagsXml = tags.map(t => `<dc:subject>${escapeHtml(t)}</dc:subject>`).join('');
-    const introXml = S.meta.intro ? `<dc:description>${escapeHtml(S.meta.intro)}</dc:description>` : '';
-    zip.file('content.opf',
-`<?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bid">
-<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-<dc:identifier id="bid">urn:epubstudio:${escapeHtml(title)}</dc:identifier>
-<dc:title>${escapeHtml(title)}</dc:title>
-<dc:creator>${escapeHtml(author)}</dc:creator>
-<dc:language>zh-CN</dc:language>
-${introXml}${tagsXml}
-<meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>
-</metadata>
-<manifest>${manifest.join('')}</manifest>
-<spine toc="ncx">${finalSpine.map(i => `<itemref idref="${i}"/>`).join('')}</spine>
-</package>`);
-
-    // ---- 打包下载 ----
-    setProg(0.85, '打包压缩…');
-    Object.keys(imgFiles).forEach(p => zip.file(p, imgFiles[p]));
-    const blob = await zip.generateAsync({type:'blob', compression:'DEFLATE', compressionOptions:{level:6}},
-      meta => setProg(0.85 + 0.14 * meta.percent / 100, `压缩中 ${Math.round(meta.percent)}%…`));
-    setProg(1, '完成');
-    const fname = (title || 'book') + '_精排.epub';
-    downloadBlob(blob, fname);
-    logLine(`\n✅ 已生成 ${fname}（${(blob.size/1048576).toFixed(1)} MB）`);
-    logLine(`　 ${chapters.length} 章 · 样式命中 ${styleHits} 处`);
-    toast('生成完成，已开始下载');
-  } catch(e) {
-    console.error(e);
-    logLine('\n❌ 失败：' + (e.message || e));
-    toast('生成失败：' + (e.message || e));
-  } finally {
-    $('buildBtn').disabled = false;
-  }
-}
-function downloadBlob(blob, name) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-}
-
-// ---------- 设置导入导出 ----------
-function exportSettings() {
-  const o = JSON.parse(JSON.stringify(S));
-  Object.keys(o.fonts).forEach(k => { if (o.fonts[k]) o.fonts[k] = bytesToB64(o.fonts[k]); });
-  delete o.cover; delete o.headers; delete o.illusts;  // 图片太大，不导出
-  const blob = new Blob([JSON.stringify(o, null, 1)], {type:'application/json'});
-  downloadBlob(blob, 'epubstudio-settings.json');
-  toast('设置已导出（不含图片）');
-}
-async function importSettingsFile(file) {
-  const o = JSON.parse(await file.text());
-  S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), o);
-  S.fonts = Object.assign({body:'',dlg:'',title:'',toc:''}, o.fonts||{});
-  S.layout = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE.layout)), o.layout||{});
-  S.meta = Object.assign({title:'',author:'',intro:'',tags:''}, o.meta||{});
-  Object.keys(S.fonts).forEach(k => { if (S.fonts[k]) S.fonts[k] = b64ToBytes(S.fonts[k]); });
-  save(); renderFontSlots(); renderStyles(); loadLayoutUI(); loadMetaUI();
-  toast('设置已导入');
-}
-function resetAll() {
-  if (!confirm('将清空字体、样式与所有设置（书籍需重新导入）。继续？')) return;
-  localStorage.removeItem('epubstudio_mobile');
-  S = JSON.parse(JSON.stringify(DEFAULT_STATE));
-  renderFontSlots(); renderStyles(); loadLayoutUI(); renderImages(); renderMeta();
-  toast('已清空');
-}
-function renderMeta() { loadMetaUI(); }
-
-// ---------- 启动 ----------
-(function init() {
-  load();
-  setRegex(S.toc_regex || DEFAULT_REGEX);
-  $('hTitle').textContent = S.meta.title || 'EPUB 精排工坊';
-  renderFontSlots(); renderStyles(); loadLayoutUI(); renderImages(); loadMetaUI();
-  updateStoreInfo();
-  // 记住上次访问的欢迎页状态
-  if (sessionStorage.getItem('welcomed') === '1') $('welcome').classList.add('hide');
-  else sessionStorage.setItem('welcomed', '1');
-  // 离开页面时保存
-  window.addEventListener('beforeunload', save);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
-  ['lMargin','lLine','lPara','lIndent','lTitle','lQuality','lCss','coverW','hW','hH','iEvery'].forEach(id => {
-    const el = $(id); if (el) el.addEventListener('change', saveLayoutUI);
-  });
-  $('hRotate').addEventListener('change', saveLayoutUI);
-  ['mTitle','mAuthor','mIntro','mTags'].forEach(id => {
-    const el = $(id); if (el) el.addEventListener('change', saveMetaUI);
-  });
-})();
-
-// 调试接口：浏览器控制台可用（如 EPUB.debug.S / EPUB.debug.BOOK = ...）
-window.EPUB = { get S(){return S;}, set S(v){S=v;}, get BOOK(){return BOOK;}, set BOOK(v){BOOK=v;},
-  parseTxt, buildEpub, subsetFont, makeMask, buildHeader, buildImage, save, load, DEFAULT_STATE };
+/*__JS__*/
 </script>
+
+<!-- HarfBuzz wasm（字体子集化，由构建脚本注入） -->
 <script type="text/plain" id="hbWasm">/*__HBWASM__*/</script>
+
 </body>
 </html>

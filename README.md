@@ -22,11 +22,11 @@
 
 ## 📱 手机版（无需电脑）
 
-仓库 [`mobile/`](mobile/) 目录提供一个**单文件网页** `epub-studio-mobile.html`（约 940KB）：传到手机用浏览器打开即可排版，**不装 App、不开电脑、不联网**。功能覆盖导入切章、字体上传（浏览器内自动子集化）、文字样式规则、11 种头图蒙版、封面插图、版式设置与 EPUB 生成。
+仓库 [`mobile/`](mobile/) 目录提供一个**单文件网页** `epub-studio-mobile.html`（约 1MB）：传到手机用浏览器打开即可排版，**不装 App、不开电脑、不联网**，兼容夸克 / Via / Chrome / Edge 等多数安卓浏览器。功能与桌面版基本对齐：导入切章（广告规则可自定义）、字体上传（浏览器内自动子集化）、文字样式规则、**选中文字换字体**、**注释 `{{注:}}` + 8 款标记图标**、头图按章指定（区间写法）、正文内按文字插图、全屏插图指定章后、**目录页背景图**、首字下沉、封面、版式与 EPUB 生成。
 
 | 导入书籍 | 字体与文字样式 | 头图与边缘样式 |
 |:---:|:---:|:---:|
-| ![导入](docs/mobile/02-import.png) | ![样式](docs/mobile/03-style.png) | ![图片](docs/mobile/04-image.png) |
+| ![导入](docs/mobile/02-import.png) | ![样式](docs/mobile/v3-style.png) | ![图片](docs/mobile/v3-image.png) |
 
 直接用：下载 [`mobile/epub-studio-mobile.html`](mobile/epub-studio-mobile.html) 传到手机即可；详细说明见 [mobile/README.md](mobile/README.md)。
 
@@ -77,7 +77,7 @@ epub-studio/
 ├── mobile/          # 手机版单文件网页（源码 + 依赖 + 构建产物）
 │   ├── template.html            # 页面模板
 │   ├── build.py                 # 注入脚本（产出单文件 HTML）
-│   ├── lib/                     # jszip.min.js + hb-subset.wasm
+│   ├── lib/                     # hb-subset.wasm（ZIP 打包已内嵌 MiniZip，无需外部库）
 │   └── epub-studio-mobile.html  # 构建产物，可直接传手机使用
 ├── docs/            # README 截图
 ├── requirements.txt
