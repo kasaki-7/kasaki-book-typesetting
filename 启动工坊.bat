@@ -1,14 +1,105 @@
 @echo off
-REM EPUB ç²¾æŽ’å·¥åŠ ä¸€é”®å¯åŠ¨ï¼ˆWindowsï¼‰
+setlocal enabledelayedexpansion
+title EPUB ¾«ÅÅ¹¤·»
 cd /d "%~dp0"
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo æœªæ‰¾åˆ° Pythonï¼Œè¯·å…ˆå®‰è£… Python 3.10+ å¹¶å‹¾é€‰ Add to PATH
+
+echo ÕýÔÚ¼ì²â Python »·¾³...
+set "PY="
+
+REM ============ 0) ÊÖ¶¯Ö¸¶¨£ºÍ¬Ä¿Â¼ÏÂ python_path.txt ÀïÐ´ python.exe µÄÍêÕûÂ·¾¶ ============
+if exist "python_path.txt" (
+    set /p PYC=<python_path.txt
+    if defined PYC if exist "!PYC!" call :trypy "!PYC!"
+)
+
+REM ============ 1) ±¾ÏîÄ¿×¨ÓÃ£ºD:\APP°²×°\Python313 ============
+if not defined PY call :trypy "D:\APP°²×°\Python313\python.exe"
+
+REM ============ 2) python-manager£¨py ¹ÜÀíÆ÷£©°²×°µÄÔËÐÐÊ± ============
+if not defined PY (
+    for /d %%V in ("%LocalAppData%\Python\pythoncore-3*") do (
+        if not defined PY call :trypy "%%~V\python.exe"
+    )
+)
+
+REM ============ 3) ¹Ù·½°²×°°üÄ¬ÈÏÎ»ÖÃ ============
+if not defined PY (
+    for /d %%V in ("%LocalAppData%\Programs\Python\Python3*") do (
+        if not defined PY call :trypy "%%~V\python.exe"
+    )
+)
+if not defined PY (
+    for /d %%V in ("%SystemDrive%\Python3*") do (
+        if not defined PY call :trypy "%%~V\python.exe"
+    )
+)
+if not defined PY (
+    for /d %%V in ("%ProgramFiles%\Python3*") do (
+        if not defined PY call :trypy "%%~V\python.exe"
+    )
+)
+
+REM ============ 4) WorkBuddy ×Ô´ø Python ¶µµ× ============
+if not defined PY (
+    for /d %%V in ("%USERPROFILE%\.workbuddy\binaries\python\versions\3*") do (
+        if not defined PY call :trypy "%%~V\python.exe"
+    )
+)
+
+if not defined PY (
+    echo.
+    echo [´íÎó] Ã»ÓÐÕÒµ½¿ÉÓÃµÄ Python 3.10+
+    echo.
+    echo ½â¾ö°ì·¨£¨ÈÎÑ¡Ò»ÖÖ£©£º
+    echo   1. ´ò¿ª¡°ÖÕ¶Ë/ÃüÁîÌáÊ¾·û¡±Ö´ÐÐ£º  py install 3.13
+    echo   2. »òµ½ https://www.python.org/downloads/ ÏÂÔØ°²×°£¬
+    echo      °²×°Ê±¹´Ñ¡ "Add python.exe to PATH"
+    echo   3. »òÔÚ±¾½Å±¾Í¬Ä¿Â¼ÐÂ½¨ python_path.txt£¬
+    echo      ÀïÃæÐ´Ò»ÐÐ python.exe µÄÍêÕûÂ·¾¶
+    echo.
     pause
     exit /b 1
 )
-if not exist .deps_installed (
-    python -m pip install -r requirements.txt && echo ok > .deps_installed
+
+echo Ê¹ÓÃ½âÊÍÆ÷£º%PY%
+%PY% --version
+echo.
+
+REM ============ ¶Ë¿ÚÕ¼ÓÃ¼ì²é ============
+netstat -ano | findstr /c:":8642" | findstr /c:"LISTENING" >nul
+if not errorlevel 1 (
+    echo [ÌáÊ¾] ¶Ë¿Ú 8642 ÒÑ±»Õ¼ÓÃ£¬³ÌÐò¿ÉÄÜÒÑ¾­ÔÚÔËÐÐ£¬Ö±½Ó´ò¿ªÒ³Ãæ¡£
+    start "" http://localhost:8642
+    exit /b 0
 )
-start "" http://localhost:8642
-python server.py 8642
+
+REM ============ ÒÀÀµ¼ì²é£¨È±Ôò°²×°£© ============
+%PY% -c "import flask, PIL, fontTools, lxml" >nul 2>&1
+if errorlevel 1 (
+    echo ÕýÔÚ°²×°ÒÀÀµ£¬ÇëÉÔºò£¨Ê×´Î¿ÉÄÜÐèÒª¼¸·ÖÖÓ£©...
+    %PY% -m pip install -r requirements.txt
+    if errorlevel 1 (
+        echo.
+        echo [´íÎó] ÒÀÀµ°²×°Ê§°Ü£¬Çë¼ì²éÍøÂçºóÖØÐÂÔËÐÐ±¾½Å±¾
+        pause
+        exit /b 1
+    )
+)
+
+echo ÕýÔÚÆô¶¯ EPUB ¾«ÅÅ¹¤·»...
+echo Ò³ÃæµØÖ·£ºhttp://localhost:8642 £¨3 Ãëºó×Ô¶¯´ò¿ªä¯ÀÀÆ÷£©
+echo ¹Ø±Õ±¾´°¿Ú¼´ÍË³ö³ÌÐò¡£
+echo.
+start "" /min cmd /c "timeout /t 3 >nul & explorer http://localhost:8642"
+%PY% server.py 8642
+echo.
+echo ·þÎñÒÑÍ£Ö¹¡£
+pause
+exit /b 0
+
+:trypy
+if defined PY goto :eof
+if not exist %1 goto :eof
+%1 -c "import sys" >nul 2>&1
+if not errorlevel 1 set "PY=%~1"
+goto :eof

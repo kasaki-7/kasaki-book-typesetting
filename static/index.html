@@ -334,6 +334,11 @@
         </div>
         <label class="fld">边缘样式（默认满幅无空隙）</label>
         <div class="edge-grid" id="edge_grid"></div>
+        <div class="row" style="margin-top:10px;align-items:flex-end">
+          <div style="width:120px"><label class="fld">底部渐隐 %</label><input type="number" id="h_fade" min="0" max="45" step="1"/></div>
+          <label class="inl"><input type="checkbox" id="h_trim"/> 自动裁掉透明留白</label>
+        </div>
+        <p class="muted" style="margin-top:6px">头图与标题之间出现白边时：把「底部渐隐」调小（0 = 不留白），并保持「自动裁掉透明留白」勾选。</p>
         <div id="g_headers" style="margin-top:8px"></div>
       </div>
       <div class="card">
@@ -430,6 +435,22 @@
           <button class="sm" onclick="saveOutDir()">保存</button>
         </div>
         <p class="muted" style="margin-bottom:12px">填写一个本机文件夹的完整路径（如 D:\电子书），生成后的 EPUB 会保存到那里；路径不存在会自动创建，不可用则回退默认目录。</p>
+
+        <div style="border-top:1px dashed #ddd;margin:6px 0 14px"></div>
+        <label class="inl" style="font-weight:600"><input type="checkbox" id="cmp_en"/> 生成后压缩体积</label>
+        <p class="muted" style="margin:6px 0 0">图片内容与版式完全不变，只降像素与压缩质量；字体转成同字形的 WOFF2。不会删除任何图片、字体或章节。</p>
+        <div class="grid4" style="margin-top:10px">
+          <div><label class="fld">目标体积 MB（0=不限）</label><input type="number" id="cmp_mb" min="0" step="1"/></div>
+          <div><label class="fld">图片最长边 px（0=不缩）</label><input type="number" id="cmp_edge" min="0" step="100"/></div>
+          <div><label class="fld">JPEG 质量</label><input type="number" id="cmp_q" min="45" max="95" step="5"/></div>
+          <div><label class="fld">PNG 色数</label><input type="number" id="cmp_colors" min="16" max="256" step="16"/></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label class="inl"><input type="checkbox" id="cmp_woff2"/> 字体转 WOFF2（同字形，体积约减半）</label>
+          <span class="muted">未达目标体积时会自动逐级降质重试，最多 6 档</span>
+        </div>
+
+        <div style="border-top:1px dashed #ddd;margin:14px 0"></div>
         <button class="primary" style="font-size:16px;padding:12px 26px" onclick="startBuild()">开始生成</button>
         <div id="buildlog"></div>
         <div id="buildresult" style="margin-top:12px"></div>
@@ -858,6 +879,7 @@ async function loadImages() {
   $('h_w').value = h.width; $('h_h').value = h.height;
   $('h_mt').value = h.margin_t; $('h_mb').value = h.margin_b;
   $('h_ml').value = h.margin_l; $('h_mr').value = h.margin_r;
+  $('h_fade').value = h.fade ?? 18; $('h_trim').checked = h.trim !== false;
   EDGE_SEL = h.edge;
   const edges = await get('/api/edge_styles');
   $('edge_grid').innerHTML = edges.map(e =>
@@ -981,6 +1003,8 @@ async function saveImages() {
       width: nv($('h_w').value, h0.width ?? 1080), height: nv($('h_h').value, h0.height ?? 500),
       margin_t: nv($('h_mt').value, h0.margin_t ?? 0), margin_b: nv($('h_mb').value, h0.margin_b ?? 0),
       margin_l: nv($('h_ml').value, h0.margin_l ?? 0), margin_r: nv($('h_mr').value, h0.margin_r ?? 0),
+      fade: Math.max(0, Math.min(45, nv($('h_fade').value, h0.fade ?? 18))),
+      trim: $('h_trim').checked,
       edge: EDGE_SEL || h0.edge || 'cloud'},
     illust: {rotate: $('i_rotate').checked, width_pct: nv($('i_wp').value, i0.width_pct ?? 100),
       every_n: nv($('i_every').value, i0.every_n ?? 25),
@@ -990,8 +1014,27 @@ async function saveImages() {
 }
 
 // ---------- 生成 ----------
+async function saveCompress() {
+  await post('/api/settings', {compress: {
+    enabled: $('cmp_en').checked,
+    target_mb: nv($('cmp_mb').value, 10),
+    img_max: nv($('cmp_edge').value, 0),
+    quality: Math.max(45, Math.min(95, nv($('cmp_q').value, 80))),
+    colors: Math.max(16, Math.min(256, nv($('cmp_colors').value, 256))),
+    woff2: $('cmp_woff2').checked,
+  }});
+}
+function fillCompress(c) {
+  c = c || {};
+  $('cmp_en').checked = !!c.enabled;
+  $('cmp_mb').value = c.target_mb ?? 10;
+  $('cmp_edge').value = c.img_max ?? 1440;
+  $('cmp_q').value = c.quality ?? 80;
+  $('cmp_colors').value = c.colors ?? 256;
+  $('cmp_woff2').checked = c.woff2 !== false;
+}
 async function startBuild() {
-  await saveLayout(); await saveImages();
+  await saveLayout(); await saveImages(); await saveCompress();
   // 记住本次保存位置，下次打开自动回填
   const od = $('out_dir').value.trim();
   if (od) await post('/api/settings', {output_dir: od});
@@ -1008,6 +1051,7 @@ async function loadBuild() {
   // 回填上次保存位置；空则提示默认目录
   $('out_dir').value = od;
   $('out_dir').placeholder = od ? '' : '留空 = 默认目录（工坊 work\\output）';
+  fillCompress(b.settings.compress);
 }
 async function saveOutDir() {
   const r = await post('/api/settings', {output_dir: $('out_dir').value.trim()});
@@ -1020,9 +1064,11 @@ async function pollBuild() {
   if (!s.running) {
     clearInterval(buildTimer);
     if (s.result) {
+      const c = s.result.compress;
+      const cInfo = c ? `<br>压缩：${c.size_before_mb} MB → <b>${c.size_after_mb} MB</b>（图片 ${c.images} 张 / 字体 ${c.fonts} 个，内容未改动）` : '';
       $('buildresult').innerHTML = `<a href="/api/download?path=${encodeURIComponent(s.result.path)}">
         <button class="primary" style="font-size:15px;padding:11px 22px">⬇ 下载 ${esc(s.result.path.split(/[\\/]/).pop())}（${s.result.size_mb} MB）</button></a>
-        <p class="muted" style="margin-top:8px">${s.result.chapters} 章 · 样式命中 ${s.result.dialogues} 处 · 注释 ${s.result.notes} 条<br>保存于：${esc(s.result.path)}</p>`;
+        <p class="muted" style="margin-top:8px">${s.result.chapters} 章 · 样式命中 ${s.result.dialogues} 处 · 注释 ${s.result.notes} 条${cInfo}<br>保存于：${esc(s.result.path)}</p>`;
     }
   }
 }

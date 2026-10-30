@@ -63,7 +63,13 @@ DEFAULT_SETTINGS = {
     "cover": "", "cover_w": 1200, "toc_bgs": [], "toc_bg_w": 880, "toc_bg_size": "100% auto",
     # header.assign：每张头图可指定章号（1开始，如 "1-20,25,30-40"，支持区间），命中章固定用该图，其余章按 rotate 规则
     "header": {"enabled": True, "rotate": True, "images": [], "assign": [], "width": 1080, "height": 500,
-               "margin_t": 0, "margin_r": 0, "margin_b": 0, "margin_l": 0, "edge": "cloud"},
+               "margin_t": 0, "margin_r": 0, "margin_b": 0, "margin_l": 0, "edge": "cloud",
+               "fade": 18, "trim": True},   # fade=底部渐隐高度(%)，trim=自动裁掉四周透明留白
+    # compress：生成后压缩体积。enabled 关闭则原样输出
+    #   target_mb 目标体积（0/空 = 只压一轮不追体积）；img_max 图片最长边像素（0 = 不缩）
+    #   quality JPEG 质量；colors 带透明 PNG 的量化色数；woff2 字体转 woff2
+    "compress": {"enabled": False, "target_mb": 10, "img_max": 1440, "quality": 80,
+                 "colors": 256, "woff2": True},
     # illust/illust2：全屏插图页。"mode": every_n 每 N 章 / after 指定章后 / anchor 按文字或章节定位
     #   anchor: {chapters:[章索引], text:"定位文字", pos:"after|before"}  pos=文字位置，章节前后由 pos 决定
     "illust": {"images": [], "mode": "every_n", "every_n": 25, "after": [], "rotate": True,
@@ -271,11 +277,11 @@ def mask_plain(w, h, seed):
     Image, *_ = _pil()
     return Image.new("L", (w, h), 255)
 
-def mask_cloud(w, h, seed):
-    """底部云雾边：底部约 1/4 高度呈云朵状渐隐到全透明（尺寸随图缩放）"""
+def mask_cloud(w, h, seed, zone_ratio=0.26):
+    """底部云雾边：底部 zone_ratio 高度呈云朵状渐隐到全透明（尺寸随图缩放）"""
     Image, ImageDraw, ImageFilter, ImageChops = _pil()
     rnd = random.Random(seed)
-    zone = int(h * 0.26)                 # 云雾区高度
+    zone = max(1, int(h * max(0.02, zone_ratio)))   # 云雾区高度
     edge = h - zone                      # 实体区下沿
     rmax = max(18, int(zone * 0.75))
     # 云朵形状：实体矩形 + 下沿一排交错重叠的圆（高低错落）
@@ -645,6 +651,45 @@ def save_compressed(im, out_jpg, quality):
     im.save(out_jpg, quality=max(10, min(95, quality if quality < 100 else 90)))
     return out_jpg
 
+def _call_mask(fn, w, h, seed, fade):
+    """按边缘函数签名传参：支持 zone_ratio 的（云边）才传渐隐高度"""
+    try:
+        return fn(w, h, seed, zone_ratio=fade)
+    except TypeError:
+        return fn(w, h, seed)
+
+def trim_alpha(im, thresh=40, pad=2):
+    """裁掉几乎看不见的透明留白（避免头图与标题之间出现一条白边）"""
+    a = im.getchannel("A")
+    bbox = a.point(lambda v: 255 if v > thresh else 0).getbbox()
+    if not bbox:
+        return im
+    l, t, r, b = bbox
+    l, t = max(0, l - pad), max(0, t - pad)
+    r, b = min(im.width, r + pad), min(im.height, b + pad)
+    # 异常保护：裁得太狠就放弃（避免只剩一条）
+    if (r - l) < im.width * 0.3 or (b - t) < im.height * 0.2:
+        return im
+    return im.crop((l, t, r, b))
+
+def trim_white_bottom(im, white=240, max_ratio=0.4):
+    """裁掉底部“看上去就是白”的区域（原图自带的白底/白雾 + 渐隐尾巴）
+    逐行按与白底合成后的平均亮度判断，最多裁掉 max_ratio 高度"""
+    Image = _pil()[0]
+    h = im.height
+    flat = Image.alpha_composite(Image.new("RGBA", im.size, (255, 255, 255, 255)),
+                                 im).convert("L")
+    rows = list(flat.resize((1, h), Image.BOX).getdata())
+    cut = h
+    limit = int(h * (1 - max_ratio))
+    y = h - 1
+    while y > limit and rows[y] >= white:
+        cut = y
+        y -= 1
+    if cut >= h or cut < int(h * 0.5):
+        return im
+    return im.crop((0, 0, im.width, max(int(h * 0.5), cut - 2)))
+
 def make_header(src, out_base, cfg, quality=100, seed=7):
     """返回生成文件名。plain/film 或 quality<100 → jpg；其余透明边缘 → png"""
     Image, *_ = _pil()
@@ -660,8 +705,12 @@ def make_header(src, out_base, cfg, quality=100, seed=7):
         save_compressed(im, out_base + ".jpg", quality)
         return os.path.basename(out_base + ".jpg")
     fn = MASK_FUNCS.get(edge, mask_cloud)
+    fade = max(0.0, min(45.0, float(cfg.get("fade", 18) or 0))) / 100.0
     rgba = im.convert("RGBA")
-    rgba.putalpha(fn(tw, th, seed))
+    rgba.putalpha(_call_mask(fn, tw, th, seed, fade))
+    if cfg.get("trim", True):
+        rgba = trim_alpha(rgba)
+        rgba = trim_white_bottom(rgba)
     rgba.save(out_base + ".png")
     return os.path.basename(out_base + ".png")
 
@@ -778,7 +827,7 @@ def style_css(s):
 
 def subset_font(src, chars_file, out, pylibs):
     env = dict(os.environ)
-    env["PYTHONPATH"] = pylibs
+    env["PYTHONPATH"] = str(pylibs or "")
     r = subprocess.run(
         [sys.executable, "-m", "fontTools.subset", src,
          "--text-file=" + chars_file, "--output-file=" + out,
@@ -1231,8 +1280,28 @@ def build_epub(book, work_dir, out_path, pylibs, log=print):
         z.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
         for n, d in files.items():
             z.writestr(n, d, compress_type=zipfile.ZIP_DEFLATED)
+
+    # ---- 生成后压缩（内容不变，只降像素/质量）----
+    comp_stat = None
+    ccfg = st.get("compress") or {}
+    if ccfg.get("enabled"):
+        try:
+            from epub_compress import compress_epub_file
+            log("开始压缩：内容与版式不变，仅压缩图片像素与字体格式…")
+            comp_stat = compress_epub_file(
+                out_path,
+                target_mb=float(ccfg.get("target_mb") or 0),
+                img_max=int(ccfg.get("img_max") or 0),
+                quality=int(ccfg.get("quality") or 80),
+                colors=int(ccfg.get("colors") or 256),
+                woff2=bool(ccfg.get("woff2", True)),
+                log=log)
+        except Exception as e:
+            log(f"压缩失败，已保留未压缩版本：{e}")
+
     size = os.path.getsize(out_path) / 1048576
     log(f"已生成 {out_path}（{size:.1f} MB），{len(chapters)} 章，样式命中 {style_hits} 处，"
         f"选字命中 {tf_hits} 处，注释 {note_total} 条")
     return {"path": out_path, "size_mb": round(size, 1), "chapters": len(chapters),
-            "dialogues": style_hits, "notes": note_total, "tf_hits": tf_hits}
+            "dialogues": style_hits, "notes": note_total, "tf_hits": tf_hits,
+            "compress": comp_stat}

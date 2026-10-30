@@ -3,8 +3,9 @@
 import os, sys, json, re, threading
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PYLIBS = r"C:\Users\86158\WorkBuddy\2026-09-24-23-45-45\pylibs"
-if os.path.isdir(PYLIBS) and PYLIBS not in sys.path:
+# 额外的依赖搜索路径（可选）：通过环境变量 EPUB_STUDIO_PYLIBS 指定，便于迁移到别的电脑
+PYLIBS = os.environ.get("EPUB_STUDIO_PYLIBS", "")
+if PYLIBS and os.path.isdir(PYLIBS) and PYLIBS not in sys.path:
     sys.path.insert(0, PYLIBS)
 
 from flask import Flask, request, jsonify, send_file, send_from_directory

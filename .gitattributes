@@ -1,0 +1,3 @@
+# .bat 是 GBK + CRLF，必须按二进制原样保存，否则 cmd 会因编码/换行错乱报错
+*.bat -text
+*.lnk -text
